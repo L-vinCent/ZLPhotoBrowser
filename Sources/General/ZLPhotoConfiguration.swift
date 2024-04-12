@@ -261,6 +261,9 @@ public class ZLPhotoConfiguration: NSObject {
     /// The first parameter is the current controller.
     /// The second parameter is the block that needs to be called after the user completes the operation.
     public var operateBeforeDoneAction: ((UIViewController, @escaping () -> Void) -> Void)?
+    
+    //显示自定义的底部选择预览页
+    public var x_showCustomSelectedPreview: Bool = false
 }
 
 @objc public enum ZLNoAuthorityType: Int {

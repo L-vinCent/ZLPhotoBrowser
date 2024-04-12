@@ -1215,6 +1215,9 @@ class ZLPhotoPreviewSelectedViewCell: UICollectionViewCell {
         imageView.frame = bounds
         tagImageView.frame = CGRect(x: 5, y: bounds.height - 25, width: 20, height: 20)
         tagLabel.frame = CGRect(x: 5, y: bounds.height - 25, width: bounds.width - 10, height: 20)
+        
+        self.layer.cornerRadius = 2
+        self.layer.masksToBounds = true
     }
     
     private func configureCell() {
@@ -1260,3 +1263,5 @@ class ZLPhotoPreviewSelectedViewCell: UICollectionViewCell {
         }
     }
 }
+
+

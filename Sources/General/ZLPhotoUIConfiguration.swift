@@ -476,7 +476,17 @@ public class ZLPhotoUIConfiguration: NSObject {
     /// Background tint color of trash can in image editor.
     /// 编辑器中垃圾箱高亮状态下的颜色
     public var trashCanBackgroundTintColor: UIColor = .zl.rgba(241, 79, 79, 0.98)
+    
+    
+    //自定义的相册底部预览视图提示文字颜色 gray300
+    public var x_CustomSelectedTitleColor: UIColor = .zl.rgba(212, 212, 212, 1.0)
+    
+    //自定义的按钮背景色 - 开始拼图
+    public var x_CustomSelectedBtnbgColor: UIColor = .zl.rgba(55, 66, 250, 1.0)
+
 }
+
+
 
 /// Font deploy
 enum ZLCustomFontDeploy {

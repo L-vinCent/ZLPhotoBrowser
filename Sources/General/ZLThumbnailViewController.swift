@@ -56,6 +56,13 @@ class ZLThumbnailViewController: UIViewController {
         return view
     }()
     
+    private lazy var bottomSelectedPreview: CustomSelectedBottomPreview = {
+        let view = CustomSelectedBottomPreview()
+        view.backgroundColor = .zl.thumbnailBgColor
+        return view
+    }()
+    
+    
     private var bottomBlurView: UIVisualEffectView?
     
     private var limitAuthTipsView: ZLLimitedAuthorityTipsView?
@@ -105,6 +112,8 @@ class ZLThumbnailViewController: UIViewController {
         btn.layer.cornerRadius = ZLLayout.bottomToolBtnCornerRadius
         return btn
     }()
+    
+    
     
     private lazy var scrollToBottomBtn: UIButton = {
         let btn = UIButton(type: .custom)
@@ -259,6 +268,7 @@ class ZLThumbnailViewController: UIViewController {
         navigationController?.navigationBar.isHidden = true
         collectionView.reloadItems(at: collectionView.indexPathsForVisibleItems)
         resetBottomToolBtnStatus()
+        resetCustomSelectPreviewStatus()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -301,8 +311,8 @@ class ZLThumbnailViewController: UIViewController {
         embedAlbumListView?.frame = CGRect(x: 0, y: navViewFrame.maxY, width: view.bounds.width, height: view.bounds.height - navViewFrame.maxY)
         
         let showBottomToolBtns = shouldShowBottomToolBar()
-        
-        let bottomViewH: CGFloat
+        let showSelectedPreview = ZLPhotoConfiguration.default().x_showCustomSelectedPreview
+        var bottomViewH: CGFloat
         if showLimitAuthTipsView, showBottomToolBtns {
             bottomViewH = ZLLayout.bottomToolViewH + ZLLimitedAuthorityTipsView.height
         } else if showLimitAuthTipsView {
@@ -311,6 +321,10 @@ class ZLThumbnailViewController: UIViewController {
             bottomViewH = ZLLayout.bottomToolViewH
         } else {
             bottomViewH = 0
+        }
+     
+        if(showSelectedPreview){
+            bottomViewH = CustomSelectedBottomPreview.height
         }
         
         let totalWidth = view.zl.width - insets.left - insets.right
@@ -334,11 +348,14 @@ class ZLThumbnailViewController: UIViewController {
             }
         }
         
-        guard showBottomToolBtns || showLimitAuthTipsView else { return }
+        bottomSelectedPreview.frame = CGRect(x: 0, y: view.frame.height - insets.bottom - bottomViewH, width: view.bounds.width, height: bottomViewH + insets.bottom)
         
+        guard showBottomToolBtns || showLimitAuthTipsView else { return }
+
         let btnH = ZLLayout.bottomToolBtnH
         
         bottomView.frame = CGRect(x: 0, y: view.frame.height - insets.bottom - bottomViewH, width: view.bounds.width, height: bottomViewH + insets.bottom)
+        
         bottomBlurView?.frame = bottomView.bounds
         
         if showLimitAuthTipsView {
@@ -391,7 +408,7 @@ class ZLThumbnailViewController: UIViewController {
         view.addSubview(collectionView)
         view.addSubview(bottomView)
         view.addSubview(scrollToBottomBtn)
-        
+        view.addSubview(bottomSelectedPreview)
         if let effect = ZLPhotoUIConfiguration.default().bottomViewBlurEffectOfAlbumList {
             bottomBlurView = UIVisualEffectView(effect: effect)
             bottomView.addSubview(bottomBlurView!)
@@ -408,7 +425,9 @@ class ZLThumbnailViewController: UIViewController {
         bottomView.addSubview(doneBtn)
         
         setupNavView()
+        
     }
+    
     
     private func setupNavView() {
         if ZLPhotoUIConfiguration.default().style == .embedAlbumList {
@@ -528,7 +547,8 @@ class ZLThumbnailViewController: UIViewController {
             (config.allowEditImage || config.allowEditVideo)
         let condition2 = config.allowPreviewPhotos && config.maxSelectCount == 1 && !config.showSelectBtnWhenSingleSelect
         let condition3 = !config.allowPreviewPhotos && config.maxSelectCount == 1
-        if condition1 || condition2 || condition3 {
+        let condition4 = config.x_showCustomSelectedPreview
+        if condition1 || condition2 || condition3 || condition4{
             return false
         }
         return true
@@ -609,6 +629,7 @@ class ZLThumbnailViewController: UIViewController {
             arrSlideIndexPaths.removeAll()
             dicOriSelectStatus.removeAll()
             resetBottomToolBtnStatus()
+            resetCustomSelectPreviewStatus()
             return
         }
         
@@ -660,6 +681,7 @@ class ZLThumbnailViewController: UIViewController {
                 cell?.btnSelect.isSelected = m.isSelected
                 refreshCellIndexAndMaskView()
                 resetBottomToolBtnStatus()
+                resetCustomSelectPreviewStatus()
                 lastSlideIndex = indexPath.row
             }
         } else if pan.state == .changed {
@@ -750,6 +772,7 @@ class ZLThumbnailViewController: UIViewController {
                     ZLMainAsync {
                         self.refreshCellIndexAndMaskView()
                         self.resetBottomToolBtnStatus()
+                        self.resetCustomSelectPreviewStatus()
                     }
                 }
             }
@@ -827,6 +850,22 @@ class ZLThumbnailViewController: UIViewController {
         } else if autoScrollInfo.direction == .bottom, offset.y + collectionView.bounds.height + distance - inset.bottom < collectionView.contentSize.height {
             collectionView.contentOffset = CGPoint(x: 0, y: offset.y + distance)
         }
+    }
+    //刷新自定义视图
+    private func resetCustomSelectPreviewStatus() {
+        if shouldShowBottomToolBar() {return}
+        guard let nav = navigationController as? ZLImageNavController else {
+            zlLoggerInDebug("Navigation controller is null")
+            return
+        }
+        
+        var startTitle = "开始拼图"
+        if(!nav.arrSelectedModels.isEmpty){
+            startTitle += "(" + String(nav.arrSelectedModels.count) + ")"
+        }
+        
+        self.bottomSelectedPreview.arrSelectedModels = nav.arrSelectedModels
+        self.bottomSelectedPreview.startTitle = startTitle
     }
     
     private func resetBottomToolBtnStatus() {
@@ -1015,6 +1054,7 @@ class ZLThumbnailViewController: UIViewController {
         }
         
         resetBottomToolBtnStatus()
+        resetCustomSelectPreviewStatus()
     }
     
     private func showEditImageVC(model: ZLPhotoModel) {
@@ -1231,6 +1271,7 @@ extension ZLThumbnailViewController: UICollectionViewDataSource, UICollectionVie
                         }
                         
                         self?.resetBottomToolBtnStatus()
+                        self?.resetCustomSelectPreviewStatus()
                     }
                 }
             } else {
@@ -1242,6 +1283,7 @@ extension ZLThumbnailViewController: UICollectionViewDataSource, UICollectionVie
                 self?.refreshCellIndexAndMaskView()
                 
                 self?.resetBottomToolBtnStatus()
+                self?.resetCustomSelectPreviewStatus()
             }
         }
         
@@ -1527,6 +1569,7 @@ extension ZLThumbnailViewController: PHPhotoLibraryChangeObserver {
                 self.loadPhotos()
             }
             self.resetBottomToolBtnStatus()
+            self.resetCustomSelectPreviewStatus()
         }
     }
 }
@@ -1855,3 +1898,152 @@ class ZLLimitedAuthorityTipsView: UIView {
         }
     }
 }
+
+
+
+class CustomSelectedBottomPreview: UIView {
+    static let height: CGFloat = 140
+    
+    var startTitle:String?{
+        didSet{
+            self.startBtn.setTitle(startTitle, for: .normal)
+        }
+    }
+    
+    var arrSelectedModels: [ZLPhotoModel] = []{
+        didSet{
+            self.collectionView.reloadData()
+        }
+    }
+
+    
+    private lazy var icon = UIImageView(image: .zl.getImage("zl_warning"))
+    
+    private lazy var tipsLabel: UILabel = {
+        let label = UILabel()
+        label.font = .zl.PingFangLight(size: 13)
+        label.text = "请选择2~9张图片"
+        label.textColor = ZLPhotoUIConfiguration.default().x_CustomSelectedTitleColor
+        label.adjustsFontSizeToFitWidth = true
+        return label
+    }()
+    
+    lazy var closeBtn: UIButton = {
+        let btn = UIButton(type: .custom)
+        var image = UIImage.zl.getImage("zl_navClose")
+        btn.setImage(image, for: .normal)
+        btn.addTarget(self, action: #selector(closeBtnClick), for: .touchUpInside)
+        return btn
+    }()
+    
+    
+    lazy var startBtn: UIButton = {
+        let btn = UIButton(type: .custom)
+        btn.setTitle("开始拼图", for: .normal)
+        btn.titleLabel?.font = .zl.PingFangRegular(size: 14)
+        btn.backgroundColor = ZLPhotoUIConfiguration.default().x_CustomSelectedBtnbgColor
+        btn.addTarget(self, action: #selector(startBtnClick), for: .touchUpInside)
+        btn.layer.cornerRadius = 5
+        btn.layer.masksToBounds = true
+        return btn
+    }()
+    
+    
+    lazy var collectionView: UICollectionView = {
+        let layout = ZLCollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        layout.itemSize = CGSizeMake(60, 60)
+        layout.minimumLineSpacing = 5
+        let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        view.backgroundColor = .clear
+        view.dataSource = self
+        view.delegate = self
+//        view.isPagingEnabled = true
+        view.showsHorizontalScrollIndicator = false
+        
+        ZLPhotoPreviewSelectedViewCell.zl.register(view)
+ 
+        
+        return view
+    }()
+    
+
+    
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        
+        addSubview(tipsLabel)
+        addSubview(startBtn)
+        addSubview(collectionView)
+        self.backgroundColor = .zl.thumbnailBgColor
+    }
+    
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        var insets = UIEdgeInsets(top: 20, left: 0, bottom: 0, right: 0)
+        if #available(iOS 11.0, *) {
+            insets = self.safeAreaInsets
+        }
+        
+        tipsLabel.frame = CGRect(x: 20, y:  26, width: 120, height: 20)
+        startBtn.frame = CGRect(x: frame.width - 20 - 100, y:0 , width: 100, height: 30)
+        startBtn.center.y = tipsLabel.center.y
+        collectionView.frame = CGRect(x: 20, y:startBtn.zl.bottom + 15 ,width: frame.width - 20*2, height: 60)
+        
+    }
+    
+    
+    @objc private func closeBtnClick() {
+        
+    }
+    
+    
+    @objc private func startBtnClick() {
+        //走完成选项
+        
+    }
+    
+}
+
+
+extension CustomSelectedBottomPreview:UICollectionViewDataSource,UICollectionViewDelegate{
+        
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return arrSelectedModels.count
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ZLPhotoPreviewSelectedViewCell.zl.identifier, for: indexPath) as! ZLPhotoPreviewSelectedViewCell
+        let m = arrSelectedModels[indexPath.row]
+        cell.model = m
+        
+        return cell
+    }
+    
+    
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        
+    }
+
+    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        
+        let m = arrSelectedModels[indexPath.row]
+   
+    }
+    
+    override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        let indexPath = collectionView.indexPathForItem(at: gestureRecognizer.location(in: collectionView))
+        return indexPath != nil
+    }
+    
+    
+}
+
