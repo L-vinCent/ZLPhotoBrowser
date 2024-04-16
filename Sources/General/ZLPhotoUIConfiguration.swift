@@ -94,10 +94,10 @@ public class ZLPhotoUIConfiguration: NSObject {
     public var columnCountBlock: ((_ collectionViewWidth: CGFloat) -> Int)?
     
     /// The minimum spacing to use between items in the same row for `ZLThumbnailViewController`.
-    public var minimumInteritemSpacing: CGFloat = 2
+    public var minimumInteritemSpacing: CGFloat = 3
     
     /// The minimum spacing to use between lines of items in the grid for `ZLThumbnailViewController`.
-    public var minimumLineSpacing: CGFloat = 2
+    public var minimumLineSpacing: CGFloat = 3
     
     /// In thumb image interface, control whether to display the selection button animation when selecting. Defaults to false.
     public var animateSelectBtnWhenSelectInThumbVC = false

@@ -36,6 +36,8 @@ public class ZLPhotoPreviewSheet: UIView {
         static let spacing: CGFloat = 1 / UIScreen.main.scale
     }
     
+    var currentVC:UIViewController?
+    
     private lazy var baseView: UIView = {
         let view = UIView()
         view.backgroundColor = .zl.rgba(230, 230, 230)
@@ -122,7 +124,8 @@ public class ZLPhotoPreviewSheet: UIView {
     private var panCell: ZLThumbnailPhotoCell?
     
     private weak var sender: UIViewController?
-    
+
+
     private lazy var fetchImageQueue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 3
@@ -133,7 +136,7 @@ public class ZLPhotoPreviewSheet: UIView {
     /// block params
     ///  - params1: result models
     ///  - params2: is full image
-    @objc public var selectImageBlock: (([ZLResultModel], Bool) -> Void)?
+    @objc public var selectImageBlock: (([ZLResultModel], Bool,UIViewController?) -> Void)?
     
     /// Callback for photos that failed to parse
     /// block params
@@ -278,6 +281,10 @@ public class ZLPhotoPreviewSheet: UIView {
     }
     
     @objc public func showPhotoLibrary(sender: UIViewController) {
+        show(preview: false, animate: false, sender: sender)
+    }
+    
+    @objc public func pushPhotoLibrary(sender: UINavigationController) {
         show(preview: false, animate: false, sender: sender)
     }
     
@@ -562,7 +569,7 @@ public class ZLPhotoPreviewSheet: UIView {
     
     private func requestSelectPhoto(viewController: UIViewController? = nil) {
         guard !arrSelectedModels.isEmpty else {
-            selectImageBlock?([], isSelectOriginal)
+            selectImageBlock?([], isSelectOriginal,self.currentVC)
             hide()
             viewController?.dismiss(animated: true, completion: nil)
             return
@@ -591,16 +598,27 @@ public class ZLPhotoPreviewSheet: UIView {
             self?.fetchImageQueue.cancelAllOperations()
         }
         
-        let isOriginal = config.allowSelectOriginal ? isSelectOriginal : config.alwaysRequestOriginal
+        var isOriginal = config.allowSelectOriginal ? isSelectOriginal : config.alwaysRequestOriginal
         
+        if(config.x_showCustomSelectedPreview){
+            //拼图默认需要原图
+            isOriginal = true
+        }
+            
         let callback = { [weak self] (sucModels: [ZLResultModel], errorAssets: [PHAsset], errorIndexs: [Int]) in
             hud.hide()
             
             func call() {
-                self?.selectImageBlock?(sucModels, isOriginal)
+                self?.selectImageBlock?(sucModels, isOriginal,self?.currentVC)
                 if !errorAssets.isEmpty {
                     self?.selectImageRequestErrorBlock?(errorAssets, errorIndexs)
                 }
+            }
+            
+            if(config.x_showCustomSelectedPreview){
+                //不做dismiss操作，直接跳转
+                call()
+                return
             }
             
             if let vc = viewController {
@@ -667,6 +685,7 @@ public class ZLPhotoPreviewSheet: UIView {
             if ZLPhotoUIConfiguration.default().style == .embedAlbumList {
                 let tvc = ZLThumbnailViewController(albumList: cameraRoll)
                 nav = self.getImageNav(rootViewController: tvc)
+                self.currentVC = tvc
             } else {
                 nav = self.getImageNav(rootViewController: ZLAlbumListController())
                 let tvc = ZLThumbnailViewController(albumList: cameraRoll)
@@ -676,6 +695,9 @@ public class ZLPhotoPreviewSheet: UIView {
             self.sender?.present(nav, animated: true) {
                 self.isHidden = true
             }
+            
+            
+           
         }
     }
     
@@ -780,7 +802,7 @@ public class ZLPhotoPreviewSheet: UIView {
     
     private func getImageNav(rootViewController: UIViewController) -> ZLImageNavController {
         let nav = ZLImageNavController(rootViewController: rootViewController)
-        nav.modalPresentationStyle = .fullScreen
+//        nav.modalPresentationStyle = .fullScreen
         nav.selectImageBlock = { [weak self, weak nav] in
             self?.isSelectOriginal = nav?.isSelectedOriginal ?? false
             self?.arrSelectedModels.removeAll()

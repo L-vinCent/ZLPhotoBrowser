@@ -1075,54 +1075,6 @@ class ZLPhotoPreviewSelectedView: UIView, UICollectionViewDataSource, UICollecti
         arrSelectedModels.insert(moveModel, at: destinationIndexPath.row)
     }
     
-    // MARK: iOS11 拖动
-
-    // iOS11 拖动cell后，部分cell无法点击，先不用这种方式
-//    @available(iOS 11.0, *)
-//    func collectionView(_ collectionView: UICollectionView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
-//        isDraging = true
-//        let itemProvider = NSItemProvider()
-//        let item = UIDragItem(itemProvider: itemProvider)
-//        return [item]
-//    }
-//
-//    @available(iOS 11.0, *)
-//    func collectionView(_ collectionView: UICollectionView, dropSessionDidUpdate session: UIDropSession, withDestinationIndexPath destinationIndexPath: IndexPath?) -> UICollectionViewDropProposal {
-//        if collectionView.hasActiveDrag {
-//            return UICollectionViewDropProposal(operation: .move, intent: .insertAtDestinationIndexPath)
-//        }
-//        return UICollectionViewDropProposal(operation: .forbidden)
-//    }
-//
-//    @available(iOS 11.0, *)
-//    func collectionView(_ collectionView: UICollectionView, performDropWith coordinator: UICollectionViewDropCoordinator) {
-//        isDraging = false
-//        guard coordinator.proposal.operation == .move,
-//              let destinationIndexPath = coordinator.destinationIndexPath,
-//              let item = coordinator.items.first,
-//              let sourceIndexPath = item.sourceIndexPath else {
-//            return
-//        }
-//
-//        let moveModel = arrSelectedModels[sourceIndexPath.row]
-//        arrSelectedModels.remove(at: sourceIndexPath.row)
-//        arrSelectedModels.insert(moveModel, at: destinationIndexPath.row)
-//
-//        collectionView.performBatchUpdates {
-//            collectionView.deleteItems(at: [sourceIndexPath])
-//            collectionView.insertItems(at: [destinationIndexPath])
-//        } completion: { _ in
-//            self.collectionView.reloadData()
-//        }
-//
-//        coordinator.drop(item.dragItem, toItemAt: destinationIndexPath)
-//        endSortBlock?(arrSelectedModels)
-//    }
-//
-//    @available(iOS 11.0, *)
-//    func collectionView(_ collectionView: UICollectionView, dragSessionDidEnd session: UIDragSession) {
-//        isDraging = false
-//    }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return arrSelectedModels.count
@@ -1133,7 +1085,6 @@ class ZLPhotoPreviewSelectedView: UIView, UICollectionViewDataSource, UICollecti
         
         let m = arrSelectedModels[indexPath.row]
         cell.model = m
-        
         return cell
     }
     
@@ -1164,6 +1115,8 @@ class ZLPhotoPreviewSelectedView: UIView, UICollectionViewDataSource, UICollecti
 }
 
 class ZLPhotoPreviewSelectedViewCell: UICollectionViewCell {
+    
+    var closeHandleClick: (()->Void)?
     private lazy var imageView: UIImageView = {
         let view = UIImageView()
         view.contentMode = .scaleAspectFill
@@ -1176,6 +1129,14 @@ class ZLPhotoPreviewSelectedViewCell: UICollectionViewCell {
         view.contentMode = .scaleAspectFit
         view.clipsToBounds = true
         return view
+    }()
+    
+    private lazy var closeBtn:ZLEnlargeButton = {
+        let btn = ZLEnlargeButton(type:.custom)
+        btn.setImage(.zl.getImage("x_edit_delete"), for: .normal)
+        btn.addTarget(self, action: #selector(buttonTap), for: .touchUpInside)
+        btn.enlargeInsets = UIEdgeInsets(top: 3, left: 5, bottom: 5, right: 5)
+        return btn
     }()
     
     private lazy var tagLabel: UILabel = {
@@ -1203,6 +1164,7 @@ class ZLPhotoPreviewSelectedViewCell: UICollectionViewCell {
         contentView.addSubview(imageView)
         contentView.addSubview(tagImageView)
         contentView.addSubview(tagLabel)
+        contentView.addSubview(closeBtn)
     }
     
     @available(*, unavailable)
@@ -1215,7 +1177,7 @@ class ZLPhotoPreviewSelectedViewCell: UICollectionViewCell {
         imageView.frame = bounds
         tagImageView.frame = CGRect(x: 5, y: bounds.height - 25, width: 20, height: 20)
         tagLabel.frame = CGRect(x: 5, y: bounds.height - 25, width: bounds.width - 10, height: 20)
-        
+        closeBtn.frame = CGRect(x: bounds.width - 2 - 16, y: 2, width: 16, height: 16)
         self.layer.cornerRadius = 2
         self.layer.masksToBounds = true
     }
@@ -1262,6 +1224,13 @@ class ZLPhotoPreviewSelectedViewCell: UICollectionViewCell {
             })
         }
     }
+    
+    @objc private func buttonTap(){
+    
+        self.closeHandleClick?()
+        
+    }
+    
 }
 
 

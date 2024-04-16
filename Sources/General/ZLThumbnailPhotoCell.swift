@@ -73,8 +73,20 @@ class ZLThumbnailPhotoCell: UICollectionViewCell {
         btn.setBackgroundImage(.zl.getImage("zl_btn_selected"), for: .selected)
         btn.addTarget(self, action: #selector(btnSelectClick), for: .touchUpInside)
         btn.enlargeInsets = UIEdgeInsets(top: 5, left: 10, bottom: 10, right: 5)
+        
         return btn
     }()
+    
+    lazy var largeSelect: ZLEnlargeButton = {
+        let btn = ZLEnlargeButton(type: .custom)
+        btn.setBackgroundImage(.zl.getImage("x_edit_enlarge"), for: .normal)
+        btn.setBackgroundImage(.zl.getImage("x_edit_enlarge"), for: .selected)
+        btn.addTarget(self, action: #selector(largeClick), for: .touchUpInside)
+        btn.enlargeInsets = UIEdgeInsets(top: 5, left: 10, bottom: 10, right: 5)
+        btn.isHidden = true
+        return btn
+    }()
+    
     
     lazy var coverView: UIView = {
         let view = UIView()
@@ -108,7 +120,7 @@ class ZLThumbnailPhotoCell: UICollectionViewCell {
     }
     
     var selectedBlock: ((@escaping (Bool) -> Void) -> Void)?
-    
+    var largeBlock:(() -> Void)?
     var model: ZLPhotoModel! {
         didSet {
             configureCell()
@@ -140,6 +152,7 @@ class ZLThumbnailPhotoCell: UICollectionViewCell {
         contentView.addSubview(coverView)
         contentView.addSubview(containerView)
         containerView.addSubview(btnSelect)
+        containerView.addSubview(largeSelect)
         containerView.addSubview(indexLabel)
         containerView.addSubview(bottomShadowView)
         bottomShadowView.addSubview(videoTag)
@@ -161,10 +174,19 @@ class ZLThumbnailPhotoCell: UICollectionViewCell {
         containerView.frame = bounds
         coverView.frame = bounds
         btnSelect.frame = CGRect(x: bounds.width - 32, y: 8, width: selectBtnWH, height: selectBtnWH)
+        largeSelect.frame = CGRect(x: bounds.width - 3 - 24, y: bounds.height - 3 - 24, width: 24, height: 24)
         if ZLPhotoUIConfiguration.default().showIndexOnSelectBtn {
             indexLabel.frame = btnSelect.frame
         } else {
             indexLabel.frame = CGRect(x: 8, y: 5, width: 50, height: selectBtnWH)
+        }
+        if(ZLPhotoConfiguration.default().x_showCustomSelectedPreview){
+            //不显示勾选按钮，可重复选择
+            btnSelect.frame = .zero
+            indexLabel.frame = .zero
+            btnSelect.isHidden = true
+            indexLabel.isHidden = true
+            largeSelect.isHidden = false
         }
         
         bottomShadowView.frame = CGRect(x: 0, y: bounds.height - 25, width: bounds.width, height: 25)
@@ -193,6 +215,12 @@ class ZLThumbnailPhotoCell: UICollectionViewCell {
             }
         })
     }
+    
+    @objc func largeClick() {
+        //进预览
+        self.largeBlock?()
+    }
+    
     
     private func configureCell() {
         let config = ZLPhotoConfiguration.default()

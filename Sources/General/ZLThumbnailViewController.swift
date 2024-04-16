@@ -59,6 +59,24 @@ class ZLThumbnailViewController: UIViewController {
     private lazy var bottomSelectedPreview: CustomSelectedBottomPreview = {
         let view = CustomSelectedBottomPreview()
         view.backgroundColor = .zl.thumbnailBgColor
+        view.isHidden = true
+        view.bottomCloseClick = {[weak self] index in
+            if let nav = self?.navigationController as? ZLImageNavController{
+                nav.arrSelectedModels.remove(at: index)
+                self?.resetCustomSelectPreviewStatus()
+            }
+        }
+        view.bottomStartClick = {[weak self] in
+            if let self = self,let nav = self.navigationController as? ZLImageNavController {
+                if let block = ZLPhotoConfiguration.default().operateBeforeDoneAction {
+                    block(self) { [weak nav] in
+                        nav?.selectImageBlock?()
+                    }
+                } else {
+                    nav.selectImageBlock?()
+                }
+            }
+        }
         return view
     }()
     
@@ -348,7 +366,11 @@ class ZLThumbnailViewController: UIViewController {
             }
         }
         
-        bottomSelectedPreview.frame = CGRect(x: 0, y: view.frame.height - insets.bottom - bottomViewH, width: view.bounds.width, height: bottomViewH + insets.bottom)
+        if(ZLPhotoConfiguration.default().x_showCustomSelectedPreview){
+            bottomSelectedPreview.frame = CGRect(x: 0, y: view.frame.height - insets.bottom - bottomViewH, width: view.bounds.width, height: bottomViewH + insets.bottom)
+            bottomSelectedPreview.isHidden = false
+        }
+        
         
         guard showBottomToolBtns || showLimitAuthTipsView else { return }
 
@@ -858,14 +880,15 @@ class ZLThumbnailViewController: UIViewController {
             zlLoggerInDebug("Navigation controller is null")
             return
         }
-        
+        self.bottomSelectedPreview.arrSelectedModels = nav.arrSelectedModels
+
         var startTitle = "开始拼图"
         if(!nav.arrSelectedModels.isEmpty){
             startTitle += "(" + String(nav.arrSelectedModels.count) + ")"
         }
         
-        self.bottomSelectedPreview.arrSelectedModels = nav.arrSelectedModels
         self.bottomSelectedPreview.startTitle = startTitle
+        self.bottomSelectedPreview.updateStartButton(isEnabled: nav.arrSelectedModels.count > 1)
     }
     
     private func resetBottomToolBtnStatus() {
@@ -1250,8 +1273,24 @@ extension ZLThumbnailViewController: UICollectionViewDataSource, UICollectionVie
             model = arrDataSources[indexPath.row]
         }
         
+//        if (config.x_showCustomSelectedPreview){
+//            model.isSelected = false
+//        }
+        
+        cell.largeBlock = {[weak self] in
+            guard let self = self  else {return}
+            let vc = ZLPhotoPreviewController(photos:self.arrDataSources, index: indexPath.row)
+            vc.backBlock = { [weak self] in
+                guard let `self` = self, self.hiddenStatusBar else { return }
+                self.hiddenStatusBar = false
+            }
+            self.show(vc, sender: nil)
+        }
+        
+       
+        
         cell.selectedBlock = { [weak self, weak nav] block in
-            if !model.isSelected {
+            if !model.isSelected || config.x_showCustomSelectedPreview{
                 let currentSelectCount = nav?.arrSelectedModels.count ?? 0
                 guard canAddModel(model, currentSelectCount: currentSelectCount, sender: self) else {
                     return
@@ -1281,7 +1320,6 @@ extension ZLThumbnailViewController: UICollectionViewDataSource, UICollectionVie
                 
                 config.didDeselectAsset?(model.asset)
                 self?.refreshCellIndexAndMaskView()
-                
                 self?.resetBottomToolBtnStatus()
                 self?.resetCustomSelectPreviewStatus()
             }
@@ -1336,6 +1374,14 @@ extension ZLThumbnailViewController: UICollectionViewDataSource, UICollectionVie
         let config = ZLPhotoConfiguration.default()
         let uiConfig = ZLPhotoUIConfiguration.default()
         
+        if config.x_showCustomSelectedPreview{
+            uiConfig.showInvalidMask = false
+            uiConfig.showSelectedMask = false
+            
+            cell.btnSelectClick()
+            return
+        }
+            
         if !config.allowPreviewPhotos {
             cell.btnSelectClick()
             return
@@ -1910,6 +1956,9 @@ class CustomSelectedBottomPreview: UIView {
         }
     }
     
+    var bottomCloseClick:((Int) -> Void)?
+    var bottomStartClick:(() -> Void)?
+
     var arrSelectedModels: [ZLPhotoModel] = []{
         didSet{
             self.collectionView.reloadData()
@@ -1926,14 +1975,6 @@ class CustomSelectedBottomPreview: UIView {
         label.textColor = ZLPhotoUIConfiguration.default().x_CustomSelectedTitleColor
         label.adjustsFontSizeToFitWidth = true
         return label
-    }()
-    
-    lazy var closeBtn: UIButton = {
-        let btn = UIButton(type: .custom)
-        var image = UIImage.zl.getImage("zl_navClose")
-        btn.setImage(image, for: .normal)
-        btn.addTarget(self, action: #selector(closeBtnClick), for: .touchUpInside)
-        return btn
     }()
     
     
@@ -1967,7 +2008,7 @@ class CustomSelectedBottomPreview: UIView {
         return view
     }()
     
-
+  
     
     
     override init(frame: CGRect) {
@@ -1998,16 +2039,24 @@ class CustomSelectedBottomPreview: UIView {
         collectionView.frame = CGRect(x: 20, y:startBtn.zl.bottom + 15 ,width: frame.width - 20*2, height: 60)
         
     }
-    
-    
-    @objc private func closeBtnClick() {
+  
+    func updateStartButton(isEnabled: Bool) {
+        startBtn.isEnabled = isEnabled
         
+        if isEnabled {
+            // 如果按钮可用，设置正常的背景色和文字颜色
+            startBtn.backgroundColor = ZLPhotoUIConfiguration.default().x_CustomSelectedBtnbgColor
+            startBtn.setTitleColor(.white, for: .normal)
+        } else {
+            // 如果按钮不可用，设置灰色背景和白色文字颜色
+            startBtn.backgroundColor = .lightGray
+            startBtn.setTitleColor(.white, for: .normal)
+        }
     }
-    
     
     @objc private func startBtnClick() {
         //走完成选项
-        
+        self.bottomStartClick?()
     }
     
 }
@@ -2023,7 +2072,9 @@ extension CustomSelectedBottomPreview:UICollectionViewDataSource,UICollectionVie
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ZLPhotoPreviewSelectedViewCell.zl.identifier, for: indexPath) as! ZLPhotoPreviewSelectedViewCell
         let m = arrSelectedModels[indexPath.row]
         cell.model = m
-        
+        cell.closeHandleClick = {[weak self] in
+            self?.bottomCloseClick?(indexPath.row)
+        }
         return cell
     }
     
