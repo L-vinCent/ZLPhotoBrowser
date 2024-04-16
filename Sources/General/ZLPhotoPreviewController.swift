@@ -65,9 +65,20 @@ class ZLPhotoPreviewController: UIViewController {
     
     private lazy var navView: UIView = {
         let view = UIView()
-        view.backgroundColor = .zl.navBarColorOfPreviewVC
+        let color = ZLPhotoConfiguration.default().x_showCustomSelectedPreview ? UIColor.black : .zl.navBarColorOfPreviewVC
+        view.backgroundColor = color
+        
         view.alpha = navViewAlpha
         return view
+    }()
+    
+    private lazy var countLabel:UILabel = {
+        let label = UILabel()
+        label.textColor = UIColor.white
+        label.font = UIFont.zl.PingFangMedium(size: 18)
+        label.textAlignment = .center
+        label.isHidden = true
+        return label
     }()
     
     private var navBlurView: UIVisualEffectView?
@@ -195,6 +206,8 @@ class ZLPhotoPreviewController: UIViewController {
         currentIndex = min(index, photos.count - 1)
         indexBeforOrientationChanged = currentIndex
         super.init(nibName: nil, bundle: nil)
+        
+        self.countLabel.text = "\(currentIndex+1) / \(photos.count)"
     }
     
     @available(*, unavailable)
@@ -234,7 +247,8 @@ class ZLPhotoPreviewController: UIViewController {
             insets = self.view.safeAreaInsets
         }
         insets.top = max(20, insets.top)
-        
+        let navH = insets.top + 44
+
         collectionView.frame = CGRect(
             x: -ZLPhotoPreviewController.colItemSpacing / 2,
             y: 0,
@@ -242,9 +256,15 @@ class ZLPhotoPreviewController: UIViewController {
             height: view.zl.height
         )
         
-        let navH = insets.top + 44
         navView.frame = CGRect(x: 0, y: 0, width: view.zl.width, height: navH)
         navBlurView?.frame = navView.bounds
+        countLabel.frame = CGRect(x: 0, y:navH - 44 , width: 120, height: 44)
+        countLabel.center.x = navView.zl.width/2.0
+        
+        if(ZLPhotoConfiguration.default().x_showCustomSelectedPreview){
+            navBlurView?.isHidden = true
+            countLabel.isHidden = false
+        }
         
         if isRTL() {
             backBtn.frame = CGRect(x: view.zl.width - insets.right - 60, y: insets.top, width: 60, height: 44)
@@ -359,6 +379,7 @@ class ZLPhotoPreviewController: UIViewController {
         
         navView.addSubview(backBtn)
         navView.addSubview(selectBtn)
+        navView.addSubview(countLabel)
 //        selectBtn.addSubview(indexLabel)
         view.addSubview(collectionView)
         view.addSubview(bottomView)
@@ -464,7 +485,12 @@ class ZLPhotoPreviewController: UIViewController {
             
             self.hideNavView = false
             self.navView.isHidden = false
-            self.bottomView.isHidden = false
+            if(ZLPhotoConfiguration.default().x_showCustomSelectedPreview){
+                //目前自定义的需求不需要底部view
+                self.bottomView.isHidden = true
+            }else{
+                self.bottomView.isHidden = false
+            }
             UIView.animate(withDuration: 0.5) {
                 self.navView.alpha = self.navViewAlpha
                 self.bottomView.alpha = 1
@@ -841,6 +867,7 @@ extension ZLPhotoPreviewController {
         currentIndex = page
         resetSubviewStatus()
         selPhotoPreview?.changeCurrentModel(to: arrDataSources[currentIndex])
+        self.countLabel.text = "\(currentIndex+1) / \(self.arrDataSources.count)"
     }
     
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
@@ -1135,7 +1162,8 @@ class ZLPhotoPreviewSelectedViewCell: UICollectionViewCell {
         let btn = ZLEnlargeButton(type:.custom)
         btn.setImage(.zl.getImage("x_edit_delete"), for: .normal)
         btn.addTarget(self, action: #selector(buttonTap), for: .touchUpInside)
-        btn.enlargeInsets = UIEdgeInsets(top: 3, left: 5, bottom: 5, right: 5)
+        btn.enlargeInsets = UIEdgeInsets(top: 5, left: 10, bottom: 10, right: 5)
+        btn.isHidden = true
         return btn
     }()
     
@@ -1165,6 +1193,11 @@ class ZLPhotoPreviewSelectedViewCell: UICollectionViewCell {
         contentView.addSubview(tagImageView)
         contentView.addSubview(tagLabel)
         contentView.addSubview(closeBtn)
+        
+        if(ZLPhotoConfiguration.default().x_showCustomSelectedPreview){
+            self.closeBtn.isHidden = false
+        }
+        
     }
     
     @available(*, unavailable)
@@ -1174,6 +1207,7 @@ class ZLPhotoPreviewSelectedViewCell: UICollectionViewCell {
     
     override func layoutSubviews() {
         super.layoutSubviews()
+        
         imageView.frame = bounds
         tagImageView.frame = CGRect(x: 5, y: bounds.height - 25, width: 20, height: 20)
         tagLabel.frame = CGRect(x: 5, y: bounds.height - 25, width: bounds.width - 10, height: 20)

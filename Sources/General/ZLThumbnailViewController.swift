@@ -1279,7 +1279,7 @@ extension ZLThumbnailViewController: UICollectionViewDataSource, UICollectionVie
         
         cell.largeBlock = {[weak self] in
             guard let self = self  else {return}
-            let vc = ZLPhotoPreviewController(photos:self.arrDataSources, index: indexPath.row)
+            let vc = ZLPhotoPreviewController(photos:self.arrDataSources, index: indexPath.row,showBottomViewAndSelectBtn: false)
             vc.backBlock = { [weak self] in
                 guard let `self` = self, self.hiddenStatusBar else { return }
                 self.hiddenStatusBar = false

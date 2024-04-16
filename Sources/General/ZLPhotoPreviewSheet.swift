@@ -206,6 +206,8 @@ public class ZLPhotoPreviewSheet: UIView {
             uiConfig.showAddPhotoButton = false
             uiConfig.columnCount = 3
             uiConfig.cellCornerRadio = 5
+            uiConfig.showSelectedPhotoPreview = false
+
         }
         
    
