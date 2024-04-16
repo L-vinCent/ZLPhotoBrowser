@@ -190,6 +190,27 @@ public class ZLPhotoPreviewSheet: UIView {
         }
     }
     
+    //自定义的相册页用
+    @objc public convenience init(xedit: Bool = false) {
+        self.init(frame: .zero)
+        if(true){
+            let config = ZLPhotoConfiguration.default()
+            let uiConfig = ZLPhotoUIConfiguration.default()
+            config.allowMixSelect = false
+            config.allowEditVideo = false
+            config.allowSelectVideo = false
+            config.maxSelectCount = 4
+            config.allowTakePhotoInLibrary = false
+            config.allowSlideSelect = false
+            config.x_showCustomSelectedPreview = true
+            uiConfig.showAddPhotoButton = false
+            uiConfig.columnCount = 3
+            uiConfig.cellCornerRadio = 5
+        }
+        
+   
+    }
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         
