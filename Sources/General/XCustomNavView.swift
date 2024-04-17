@@ -10,7 +10,7 @@ import UIKit
 class XCustomNavView:UIView{
     
     var clickBackHandle:(()->Void)?
-    var title:String = "导入照片"{
+    var title:String = ""{
         didSet{
             self.titleLabel.text = title
         }
