@@ -97,7 +97,11 @@ extension ZLPhotoBrowserWrapper where Base: UIColor {
     
     /// 小图界面背景色
     static var thumbnailBgColor: UIColor {
-        ZLPhotoUIConfiguration.default().thumbnailBgColor
+        if(ZLPhotoConfiguration.default().x_showCustomSelectedPreview){
+            return   ZLPhotoUIConfiguration.default().x_CustomThemeBlack
+        }else{
+            return ZLPhotoUIConfiguration.default().thumbnailBgColor
+        }
     }
     
     /// 预览大图界面背景色
@@ -259,6 +263,7 @@ extension ZLPhotoBrowserWrapper where Base: UIColor {
     static var trashCanBackgroundTintColor: UIColor {
         ZLPhotoUIConfiguration.default().trashCanBackgroundTintColor
     }
+
 }
 
 extension ZLPhotoBrowserWrapper where Base: UIColor {

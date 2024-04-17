@@ -479,11 +479,12 @@ public class ZLPhotoUIConfiguration: NSObject {
     
     
     //自定义的相册底部预览视图提示文字颜色 gray300
-    public var x_CustomSelectedTitleColor: UIColor = .zl.rgba(212, 212, 212, 1.0)
+    public var x_CustomTitleColor300: UIColor = .zl.rgba(212, 212, 212, 1.0)
     
     //自定义的按钮背景色 - 开始拼图
     public var x_CustomSelectedBtnbgColor: UIColor = .zl.rgba(55, 66, 250, 1.0)
-
+    //自定义的按钮背景色 - 开始拼图
+    public var x_CustomThemeBlack: UIColor = .zl.rgba(0, 0, 0, 1.0)
     
 }
 

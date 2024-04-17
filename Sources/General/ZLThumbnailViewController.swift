@@ -56,6 +56,25 @@ class ZLThumbnailViewController: UIViewController {
         return view
     }()
     
+    private lazy var customNav: XCustomNavView = {
+        let view = XCustomNavView()
+        view.isHidden = true
+        view.clickBackHandle = {[weak self] in
+            self?.dismiss(animated: true)
+        }
+        return view
+    }()
+    
+    private lazy var segmentView: XSegmentAlbumView = {
+        let view = XSegmentAlbumView(selectedAlbum: albumList)
+        view.isHidden = true
+        view.clickSegHandle = {[weak self] selectedAlbum in
+            self?.albumList = selectedAlbum
+            self?.loadPhotos()
+        }
+        return view
+    }()
+    
     private lazy var bottomSelectedPreview: CustomSelectedBottomPreview = {
         let view = CustomSelectedBottomPreview()
         view.backgroundColor = .zl.thumbnailBgColor
@@ -312,6 +331,8 @@ class ZLThumbnailViewController: UIViewController {
         super.viewDidLayoutSubviews()
         
         let navViewNormalH: CGFloat = 44
+        var topH:CGFloat = 0
+        
         
         var insets = UIEdgeInsets(top: 20, left: 0, bottom: 0, right: 0)
         var collectionViewInsetTop: CGFloat = 20
@@ -321,6 +342,12 @@ class ZLThumbnailViewController: UIViewController {
         } else {
             collectionViewInsetTop += navViewNormalH
         }
+        let showSelectedPreview = ZLPhotoConfiguration.default().x_showCustomSelectedPreview
+
+        if (showSelectedPreview){
+            collectionViewInsetTop += XSegmentAlbumView.height
+        }
+        
         
         let navViewFrame = CGRect(x: 0, y: 0, width: view.frame.width, height: insets.top + navViewNormalH)
         externalNavView?.frame = navViewFrame
@@ -329,7 +356,6 @@ class ZLThumbnailViewController: UIViewController {
         embedAlbumListView?.frame = CGRect(x: 0, y: navViewFrame.maxY, width: view.bounds.width, height: view.bounds.height - navViewFrame.maxY)
         
         let showBottomToolBtns = shouldShowBottomToolBar()
-        let showSelectedPreview = ZLPhotoConfiguration.default().x_showCustomSelectedPreview
         var bottomViewH: CGFloat
         if showLimitAuthTipsView, showBottomToolBtns {
             bottomViewH = ZLLayout.bottomToolViewH + ZLLimitedAuthorityTipsView.height
@@ -340,11 +366,18 @@ class ZLThumbnailViewController: UIViewController {
         } else {
             bottomViewH = 0
         }
-     
+        
+        
         if(showSelectedPreview){
             bottomViewH = CustomSelectedBottomPreview.height
+            bottomSelectedPreview.frame = CGRect(x: 0, y: view.frame.height - insets.bottom - bottomViewH, width: view.bounds.width, height: bottomViewH + insets.bottom)
+            bottomSelectedPreview.isHidden = false
+            
+            customNav.frame = CGRect(x: 0, y: 0, width: view.bounds.width, height: insets.top + navViewNormalH)
+            segmentView.frame = CGRect(x: 0, y: customNav.zl.bottom, width: view.bounds.width, height: XSegmentAlbumView.height)
+            
         }
-        
+    
         let totalWidth = view.zl.width - insets.left - insets.right
         collectionView.frame = CGRect(x: insets.left, y: 0, width: totalWidth, height: view.frame.height)
         collectionView.contentInset = UIEdgeInsets(top: collectionViewInsetTop, left: 0, bottom: bottomViewH, right: 0)
@@ -364,11 +397,6 @@ class ZLThumbnailViewController: UIViewController {
             if let lastVisibleIndexPathBeforeRotation {
                 collectionView.scrollToItem(at: lastVisibleIndexPathBeforeRotation, at: .bottom, animated: false)
             }
-        }
-        
-        if(ZLPhotoConfiguration.default().x_showCustomSelectedPreview){
-            bottomSelectedPreview.frame = CGRect(x: 0, y: view.frame.height - insets.bottom - bottomViewH, width: view.bounds.width, height: bottomViewH + insets.bottom)
-            bottomSelectedPreview.isHidden = false
         }
         
         
@@ -431,6 +459,9 @@ class ZLThumbnailViewController: UIViewController {
         view.addSubview(bottomView)
         view.addSubview(scrollToBottomBtn)
         view.addSubview(bottomSelectedPreview)
+        view.addSubview(segmentView)
+        view.addSubview(customNav)
+
         if let effect = ZLPhotoUIConfiguration.default().bottomViewBlurEffectOfAlbumList {
             bottomBlurView = UIVisualEffectView(effect: effect)
             bottomView.addSubview(bottomBlurView!)
@@ -452,6 +483,14 @@ class ZLThumbnailViewController: UIViewController {
     
     
     private func setupNavView() {
+        if ZLPhotoConfiguration.default().x_showCustomSelectedPreview {
+            //自定义界面的view
+            self.embedNavView?.isHidden = true
+            self.segmentView.isHidden = false
+            self.customNav.isHidden = false
+            return
+        }
+        
         if ZLPhotoUIConfiguration.default().style == .embedAlbumList {
             embedNavView = ZLEmbedAlbumListNavView(title: albumList.title)
             
@@ -1972,7 +2011,7 @@ class CustomSelectedBottomPreview: UIView {
         let label = UILabel()
         label.font = .zl.PingFangLight(size: 13)
         label.text = "请选择2~9张图片"
-        label.textColor = ZLPhotoUIConfiguration.default().x_CustomSelectedTitleColor
+        label.textColor = ZLPhotoUIConfiguration.default().x_CustomTitleColor300
         label.adjustsFontSizeToFitWidth = true
         return label
     }()
