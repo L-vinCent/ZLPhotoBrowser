@@ -102,7 +102,7 @@ extension XSegmentAlbumView: UICollectionViewDelegateFlowLayout, UICollectionVie
         let model = self.arrDataSource[indexPath.row]
         if(selectedAlbum == model) {return}
         selectedAlbum = model
-        self.clickSegHandle?(selectedAlbum)
+        self.clickSegHandle?(model)
         self.collectionView.reloadData()
     }
     

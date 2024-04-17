@@ -60,7 +60,10 @@ class ZLThumbnailViewController: UIViewController {
         let view = XCustomNavView()
         view.isHidden = true
         view.clickBackHandle = {[weak self] in
-            self?.dismiss(animated: true)
+            let nav = self?.navigationController as? ZLImageNavController
+            nav?.dismiss(animated: true, completion: {
+                nav?.cancelBlock?()
+            })
         }
         return view
     }()
@@ -269,7 +272,7 @@ class ZLThumbnailViewController: UIViewController {
     }
     
     deinit {
-        zl_debugPrint("ZLThumbnailViewController deinit")
+        zlLoggerInDebug("ZLThumbnailViewController deinit")
         cleanTimer()
     }
     
