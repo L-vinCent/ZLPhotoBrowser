@@ -370,11 +370,17 @@ class ZLThumbnailViewController: UIViewController {
             bottomViewH = 0
         }
         
-        
+        //有自定义的视图
         if(showSelectedPreview){
             bottomViewH = CustomSelectedBottomPreview.height
+            if(ZLPhotoConfiguration.default().maxSelectCount == 1){
+                bottomViewH = 0
+                bottomSelectedPreview.isHidden = true
+            }else{
+                bottomSelectedPreview.isHidden = false
+            }
+            
             bottomSelectedPreview.frame = CGRect(x: 0, y: view.frame.height - insets.bottom - bottomViewH, width: view.bounds.width, height: bottomViewH + insets.bottom)
-            bottomSelectedPreview.isHidden = false
             
             customNav.frame = CGRect(x: 0, y: 0, width: view.bounds.width, height: insets.top + navViewNormalH)
             segmentView.frame = CGRect(x: 0, y: customNav.zl.bottom, width: view.bounds.width, height: XSegmentAlbumView.height)
@@ -1346,6 +1352,11 @@ extension ZLThumbnailViewController: UICollectionViewDataSource, UICollectionVie
                         
                         config.didSelectAsset?(model.asset)
                         self?.refreshCellIndexAndMaskView()
+                        
+                        if  config.maxSelectCount == 1, config.x_showCustomSelectedPreview {
+                            //自定义模式下，单张图直接dismiss
+                            self?.doneBtnClick()
+                        }
                         
                         if config.maxSelectCount == 1, !config.allowPreviewPhotos {
                             self?.doneBtnClick()

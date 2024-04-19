@@ -36,6 +36,8 @@ public class ZLPhotoPreviewSheet: UIView {
         static let spacing: CGFloat = 1 / UIScreen.main.scale
     }
     
+    var initMaxCount:Int?
+    
     var currentVC:UIViewController?
     
     private lazy var baseView: UIView = {
@@ -190,27 +192,44 @@ public class ZLPhotoPreviewSheet: UIView {
         }
     }
     
-    //自定义的相册页用
+    //自定义的相册页用, 添加了顶部、底部自定义view,更改了勾选状态UI
     @objc public convenience init(xedit: Bool = false) {
         self.init(frame: .zero)
-        if(true){
-            let config = ZLPhotoConfiguration.default()
-            let uiConfig = ZLPhotoUIConfiguration.default()
-            config.allowMixSelect = false
-            config.allowEditVideo = false
-            config.allowSelectVideo = false
-            config.maxSelectCount = 4
-            config.allowTakePhotoInLibrary = false
-            config.allowSlideSelect = false
-            config.x_showCustomSelectedPreview = true
-            uiConfig.showAddPhotoButton = false
-            uiConfig.columnCount = 3
-            uiConfig.cellCornerRadio = 5
-            uiConfig.showSelectedPhotoPreview = false
-            uiConfig.languageType = .chineseSimplified
-        }
+        restoreCustomConfigure(store: xedit)
+    }
+    
+    //恢复自定义的相册页配置
+    public func restoreCustomConfigure(store:Bool){
+        let config = ZLPhotoConfiguration.default()
+        let uiConfig = ZLPhotoUIConfiguration.default()
+        config.allowMixSelect = false
+        config.allowEditVideo = false
+        config.allowSelectVideo = false
+        config.maxSelectCount = 4
+        config.allowTakePhotoInLibrary = false
+        config.allowSlideSelect = false
+        config.x_showCustomSelectedPreview = true
+//        config.x_hiddenBottomCustomView = false
+        uiConfig.showAddPhotoButton = false
+        uiConfig.columnCount = 3
+        uiConfig.cellCornerRadio = 5
+        uiConfig.showSelectedPhotoPreview = false
+        uiConfig.languageType = .chineseSimplified
         
-   
+        self.initMaxCount = config.maxSelectCount
+
+    }
+    
+    //自定义的相册页用, 隐藏底部view，仅选择单张，dimiss当前控制器
+    @objc public convenience init(xOne: Bool = false) {
+        self.init(frame: .zero)
+        if(xOne){
+            restoreCustomConfigure(store: true)
+            ZLPhotoConfiguration.default().maxSelectCount = 1
+        }
+       
+//        ZLPhotoConfiguration.default().x_hiddenBottomCustomView = true
+
     }
     
     override init(frame: CGRect) {
@@ -636,9 +655,14 @@ public class ZLPhotoPreviewSheet: UIView {
                 if !errorAssets.isEmpty {
                     self?.selectImageRequestErrorBlock?(errorAssets, errorIndexs)
                 }
+                
+                //initMaxCount 有值，证明目前有已经存在的相册页,因为config是单例通用， 目前存在A相册页继续弹出B相册页的情况，B在dismiss后，个数回到A相册页初始状态
+                if let count = self?.initMaxCount {
+                    config.maxSelectCount = count
+                }
             }
             
-            if(config.x_showCustomSelectedPreview){
+            if(config.x_showCustomSelectedPreview && config.maxSelectCount > 1){
                 //不做dismiss操作，直接跳转
                 call()
                 return

@@ -262,8 +262,12 @@ public class ZLPhotoConfiguration: NSObject {
     /// The second parameter is the block that needs to be called after the user completes the operation.
     public var operateBeforeDoneAction: ((UIViewController, @escaping () -> Void) -> Void)?
     
-    //显示自定义的底部选择预览页,走底部删除的一套交互
+    //显示自定义相册页,走底部删除的一套交互
     public var x_showCustomSelectedPreview: Bool = false
+    
+//    //不显示底部view
+//    public var x_hiddenBottomCustomView: Bool = false
+    
     
 }
 
