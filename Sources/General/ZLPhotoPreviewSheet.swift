@@ -205,11 +205,10 @@ public class ZLPhotoPreviewSheet: UIView {
         config.allowMixSelect = false
         config.allowEditVideo = false
         config.allowSelectVideo = false
-        config.maxSelectCount = 4
+        config.maxSelectCount = 9
         config.allowTakePhotoInLibrary = false
         config.allowSlideSelect = false
         config.x_showCustomSelectedPreview = true
-//        config.x_hiddenBottomCustomView = false
         uiConfig.showAddPhotoButton = false
         uiConfig.columnCount = 3
         uiConfig.cellCornerRadio = 5
