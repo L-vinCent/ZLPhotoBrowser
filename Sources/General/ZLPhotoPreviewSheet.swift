@@ -212,6 +212,7 @@ public class ZLPhotoPreviewSheet: UIView {
         uiConfig.showAddPhotoButton = false
         uiConfig.columnCount = 3
         uiConfig.cellCornerRadio = 5
+        uiConfig.sortAscending = false
         uiConfig.showSelectedPhotoPreview = false
         uiConfig.languageType = .chineseSimplified
         
