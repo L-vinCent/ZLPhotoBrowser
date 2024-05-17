@@ -261,6 +261,9 @@ public class ZLPhotoUIConfiguration: NSObject {
     /// 相册列表及小图界面导航条背景色
     public var navBarColor: UIColor = .zl.rgba(140, 140, 140, 0.75)
     
+    //相册页，已选择的按钮背景色
+    public var chooseCellLabelColor: UIColor = .zl.rgba(0, 0, 0, 0.3)
+
     /// A color for navigation bar in preview interface.
     /// 预览大图界面的导航条背景色
     public var navBarColorOfPreviewVC: UIColor = .zl.rgba(50, 50, 50)

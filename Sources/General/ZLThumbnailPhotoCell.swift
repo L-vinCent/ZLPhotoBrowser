@@ -113,6 +113,18 @@ class ZLThumbnailPhotoCell: UICollectionViewCell {
         return label
     }()
     
+    lazy var chooseLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = UIColor.white
+        label.backgroundColor =  ZLPhotoUIConfiguration.default().chooseCellLabelColor
+        label.font = UIFont.systemFont(ofSize: 10)
+        label.layer.cornerRadius = 2
+        label.layer.masksToBounds = true
+        label.text = "已添加"
+        label.isHidden = true
+        return label
+    }()
+    
     var enableSelect = true {
         didSet {
             containerView.alpha = enableSelect ? 1 : 0.2
@@ -126,7 +138,12 @@ class ZLThumbnailPhotoCell: UICollectionViewCell {
             configureCell()
         }
     }
-    
+    var chooseed:Bool?{
+        didSet{
+            guard let chooseed = chooseed else {return}
+            self.chooseLabel.isHidden = !chooseed
+        }
+    }
     var index = 0 {
         didSet {
             indexLabel.text = String(index)
@@ -151,6 +168,7 @@ class ZLThumbnailPhotoCell: UICollectionViewCell {
         contentView.addSubview(imageView)
         contentView.addSubview(coverView)
         contentView.addSubview(containerView)
+        containerView.addSubview(chooseLabel)
         containerView.addSubview(btnSelect)
         containerView.addSubview(largeSelect)
         containerView.addSubview(indexLabel)
@@ -190,6 +208,7 @@ class ZLThumbnailPhotoCell: UICollectionViewCell {
         }
         
         bottomShadowView.frame = CGRect(x: 0, y: bounds.height - 25, width: bounds.width, height: 25)
+        chooseLabel.frame = CGRect(x: 0, y: 0, width: 34, height: 16)
         videoTag.frame = CGRect(x: 5, y: 1, width: 20, height: 15)
         livePhotoTag.frame = CGRect(x: 5, y: -1, width: 20, height: 20)
         editImageTag.frame = CGRect(x: 5, y: -1, width: 20, height: 20)

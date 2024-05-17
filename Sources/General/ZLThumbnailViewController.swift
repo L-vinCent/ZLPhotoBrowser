@@ -78,13 +78,22 @@ class ZLThumbnailViewController: UIViewController {
         return view
     }()
     
+    private func reloadTarget(iden:String){
+        guard let index = self.arrDataSources.firstIndex(where: {$0.ident == iden}) else {return}
+        print("\(index)")
+        self.collectionView.reloadItems(at: [IndexPath(row: index, section: 0)])
+    }
+    
     private lazy var bottomSelectedPreview: CustomSelectedBottomPreview = {
         let view = CustomSelectedBottomPreview()
         view.backgroundColor = .zl.thumbnailBgColor
         view.isHidden = true
         view.bottomCloseClick = {[weak self] index in
             if let nav = self?.navigationController as? ZLImageNavController{
+                let iden = nav.arrSelectedModels[index].ident
+                
                 nav.arrSelectedModels.remove(at: index)
+                self?.reloadTarget(iden: iden)
                 self?.resetCustomSelectPreviewStatus()
             }
         }
@@ -1324,6 +1333,7 @@ extension ZLThumbnailViewController: UICollectionViewDataSource, UICollectionVie
 //        if (config.x_showCustomSelectedPreview){
 //            model.isSelected = false
 //        }
+
         
         cell.largeBlock = {[weak self] in
             guard let self = self  else {return}
@@ -1335,7 +1345,9 @@ extension ZLThumbnailViewController: UICollectionViewDataSource, UICollectionVie
             self.show(vc, sender: nil)
         }
         
-       
+        let chooseed = nav?.arrSelectedModels.containsModel(withIdent: model.ident)
+        cell.chooseed = chooseed
+        
         
         cell.selectedBlock = { [weak self, weak nav] block in
             if !model.isSelected || config.x_showCustomSelectedPreview{
@@ -1349,6 +1361,9 @@ extension ZLThumbnailViewController: UICollectionViewDataSource, UICollectionVie
                         model.isSelected = true
                         nav?.arrSelectedModels.append(model)
                         block(true)
+                        
+                        let chooseed = nav?.arrSelectedModels.containsModel(withIdent: model.ident)
+                        cell.chooseed = chooseed
                         
                         config.didSelectAsset?(model.asset)
                         self?.refreshCellIndexAndMaskView()
@@ -1466,6 +1481,7 @@ extension ZLThumbnailViewController: UICollectionViewDataSource, UICollectionVie
         }
         show(vc, sender: nil)
     }
+  
     
     private func shouldDirectEdit(_ model: ZLPhotoModel) -> Bool {
         let config = ZLPhotoConfiguration.default()
@@ -2151,3 +2167,8 @@ extension CustomSelectedBottomPreview:UICollectionViewDataSource,UICollectionVie
     
 }
 
+extension Array where Element == ZLPhotoModel {
+    func containsModel(withIdent ident: String) -> Bool {
+        return contains { $0.ident == ident }
+    }
+}
