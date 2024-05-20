@@ -1143,7 +1143,7 @@ class ZLPhotoPreviewSelectedView: UIView, UICollectionViewDataSource, UICollecti
 
 class ZLPhotoPreviewSelectedViewCell: UICollectionViewCell {
     
-    var closeHandleClick: (()->Void)?
+//    var closeHandleClick: (()->Void)?
     private lazy var imageView: UIImageView = {
         let view = UIImageView()
         view.contentMode = .scaleAspectFill
@@ -1161,9 +1161,10 @@ class ZLPhotoPreviewSelectedViewCell: UICollectionViewCell {
     private lazy var closeBtn:ZLEnlargeButton = {
         let btn = ZLEnlargeButton(type:.custom)
         btn.setImage(.zl.getImage("x_edit_delete"), for: .normal)
-        btn.addTarget(self, action: #selector(buttonTap), for: .touchUpInside)
+//        btn.addTarget(self, action: #selector(buttonTap), for: .touchUpInside)
         btn.enlargeInsets = UIEdgeInsets(top: 5, left: 10, bottom: 10, right: 5)
         btn.isHidden = true
+        btn.isEnabled = false
         return btn
     }()
     
@@ -1259,11 +1260,11 @@ class ZLPhotoPreviewSelectedViewCell: UICollectionViewCell {
         }
     }
     
-    @objc private func buttonTap(){
-    
-        self.closeHandleClick?()
-        
-    }
+//    @objc private func buttonTap(){
+//    
+//        self.closeHandleClick?()
+//        
+//    }
     
 }
 

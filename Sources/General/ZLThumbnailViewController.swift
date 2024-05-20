@@ -1379,6 +1379,8 @@ extension ZLThumbnailViewController: UICollectionViewDataSource, UICollectionVie
                         
                         self?.resetBottomToolBtnStatus()
                         self?.resetCustomSelectPreviewStatus()
+                        self?.bottomSelectedPreview.scrollToRightmostItem()
+
                     }
                 }
             } else {
@@ -1601,7 +1603,11 @@ extension ZLThumbnailViewController: UICollectionViewDataSource, UICollectionVie
             } else if selCount >= config.maxSelectCount {
                 cell.coverView.backgroundColor = .zl.invalidMaskColor
                 cell.coverView.isHidden = !uiConfig.showInvalidMask
-                cell.enableSelect = false
+                if(ZLPhotoConfiguration.default().x_showCustomSelectedPreview){
+                    cell.enableSelect = true
+                }else{
+                    cell.enableSelect = false
+                }
             }
             if uiConfig.showSelectedBorder {
                 cell.layer.borderWidth = 0
@@ -2031,6 +2037,7 @@ class CustomSelectedBottomPreview: UIView {
     var arrSelectedModels: [ZLPhotoModel] = []{
         didSet{
             self.collectionView.reloadData()
+            
         }
     }
 
@@ -2109,6 +2116,17 @@ class CustomSelectedBottomPreview: UIView {
         
     }
   
+    
+    func scrollToRightmostItem() {
+        let itemCount = arrSelectedModels.count
+        guard itemCount > 0 else { return }
+
+        let lastItemIndex = itemCount - 1
+        let lastIndexPath = IndexPath(item: lastItemIndex, section: 0)
+        collectionView.scrollToItem(at: lastIndexPath, at: .right, animated: true)
+    }
+
+    
     func updateStartButton(isEnabled: Bool) {
         startBtn.isEnabled = isEnabled
         
@@ -2141,16 +2159,18 @@ extension CustomSelectedBottomPreview:UICollectionViewDataSource,UICollectionVie
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ZLPhotoPreviewSelectedViewCell.zl.identifier, for: indexPath) as! ZLPhotoPreviewSelectedViewCell
         let m = arrSelectedModels[indexPath.row]
         cell.model = m
-        cell.closeHandleClick = {[weak self] in
-            self?.bottomCloseClick?(indexPath.row)
-        }
+//        cell.closeHandleClick = {[weak self] in
+//            self?.bottomCloseClick?(indexPath.row)
+//        }
         return cell
     }
     
     
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        
+        collectionView.deselectItem(at: indexPath, animated: false)
+        self.bottomCloseClick?(indexPath.row)
+
     }
 
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
