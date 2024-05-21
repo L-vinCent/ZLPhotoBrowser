@@ -13,7 +13,7 @@ class XSegmentAlbumView:UIView{
     
     static let height: CGFloat = 50
 
-    private var selectedAlbum: ZLAlbumListModel
+    private var selectedAlbum: ZLAlbumListModel?
     private var arrDataSource: [ZLAlbumListModel] = []
 
     lazy var collectionView: UICollectionView = {
@@ -33,7 +33,7 @@ class XSegmentAlbumView:UIView{
         return cw
     }()
     
-    init(selectedAlbum: ZLAlbumListModel) {
+    init(selectedAlbum: ZLAlbumListModel?) {
         self.selectedAlbum = selectedAlbum
         super.init(frame: .zero)
         setupUI()
