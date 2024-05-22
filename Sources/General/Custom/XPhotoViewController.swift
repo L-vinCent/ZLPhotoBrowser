@@ -125,6 +125,7 @@ public class XPhotoViewController:UIViewController{
         super.viewDidLoad()
         configUI()
         loadContent()
+        
     }
     
     private func configUI(){
@@ -133,7 +134,7 @@ public class XPhotoViewController:UIViewController{
         view.addSubview(segmentView)
         view.addSubview(bottomSelectedPreview)
         view.addSubview(customNav)
-        
+        resetCustomSelectPreviewStatus()
         NotificationCenter.default.addObserver(self, selector: #selector(resetCurrentVCDidChange), name: .PuzzleAgainDidChange, object: nil)
         
     }
