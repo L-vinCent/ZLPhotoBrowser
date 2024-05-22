@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Photos
 
 public class XTempVC:UIViewController{
     //数据源 所有相册
@@ -14,6 +15,18 @@ public class XTempVC:UIViewController{
     private var albumList: ZLAlbumListModel?
     //scrollow 所有内容view
     private var contentViews:[XThumbNailCollectionView] = []
+    //完成的回调数据
+    public var DoneImageBlock: (([ZLResultModel]) -> Void)?
+    //失败的回调数据
+    public var selectImageErrorBlock: (([PHAsset], [Int]) -> Void)?
+
+    //完成后获取图片的队列
+    private lazy var fetchImageQueue: OperationQueue = {
+        let queue = OperationQueue()
+        queue.maxConcurrentOperationCount = 3
+        return queue
+    }()
+
     //存在单例的选中数据源，方便全局调用，在控制器销毁的时候会clear
     var arrSelectedModels: [ZLPhotoModel] {
         get {
@@ -28,6 +41,8 @@ public class XTempVC:UIViewController{
         let view = XCustomNavView()
         view.isHidden = false
         view.clickBackHandle = {[weak self] in
+            NotificationCenter.default.removeObserver(self,name: .PuzzleAgainDidChange, object: nil)
+
             self?.navigationController?.popViewController(animated: true)
         }
         return view
@@ -107,6 +122,9 @@ public class XTempVC:UIViewController{
         view.addSubview(segmentView)
         view.addSubview(bottomSelectedPreview)
         view.addSubview(customNav)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(resetCurrentVCDidChange), name: .PuzzleAgainDidChange, object: nil)
+        
     }
     
     private func loadContent(){
@@ -127,7 +145,21 @@ public class XTempVC:UIViewController{
         print("XTempVC deinit")
         XDataSourcesManager.shared.clearDatas()
     }
+    
 }
+
+//MARK:  处理通知
+extension XTempVC {
+    //重置到初始状态
+    @objc private func resetCurrentVCDidChange() {
+        arrSelectedModels.removeAll()
+        contentViews.forEach { $0.collectionView.reloadData()}
+        self.resetCustomSelectPreviewStatus()
+
+    }
+
+}
+
 
 //MARK: 底部视图点击事件
 extension XTempVC{
@@ -141,8 +173,14 @@ extension XTempVC{
     }
     //开始拼图
     private func startPuzzle(){
-       
+//        var DoneSelectedModels:[ZLPhotoModel] = []
+//        DoneSelectedModels.append(contentsOf: arrSelectedModels)
+//        DoneImageBlock?(DoneSelectedModels)
+        
+        self.requestSelectPhoto()
     }
+    
+    
     
 }
 
@@ -178,6 +216,7 @@ extension XTempVC{
             labum.refetchPhotos()
             datas.append(contentsOf: labum.models)
         }
+        
         let view = XThumbNailCollectionView()
         view.arrDataSources = datas
         view.arrSelectedModels = self.arrSelectedModels
@@ -201,7 +240,7 @@ extension XTempVC{
     
 }
 
-//view 底部栏状态刷新
+//MARK: view 底部栏状态刷新
 extension XTempVC{
    
     //刷新自定义视图
@@ -217,7 +256,6 @@ extension XTempVC{
         self.bottomSelectedPreview.updateStartButton(isEnabled: arrSelectedModels.count > 1)
     }
     
-    
 }
 //MARK: 一些私有方法
 extension XTempVC{
@@ -227,4 +265,93 @@ extension XTempVC{
         contentViews.forEach { $0.reloadTarget(iden:iden) }
     }
     
+  
+}
+//MARK: 相册选择完成的回调 缩略图-原图
+
+extension XTempVC{
+    
+
+    private func requestSelectPhoto() {
+        
+        let config = ZLPhotoConfiguration.default()
+        var isOriginal = true
+        
+        let hud = ZLProgressHUD.show(toast: .processing, timeout: ZLPhotoUIConfiguration.default().timeout)
+        var timeout = false
+        hud.timeoutBlock = { [weak self] in
+            timeout = true
+            showAlertView(localLanguageTextValue(.timeout), self)
+            self?.fetchImageQueue.cancelAllOperations()
+        }
+        
+        let callback = { [weak self] (sucModels: [ZLResultModel], errorAssets: [PHAsset], errorIndexs: [Int]) in
+            hud.hide()
+            
+            func call() {
+                self?.DoneImageBlock?(sucModels)
+                if !errorAssets.isEmpty {
+                    self?.selectImageErrorBlock?(errorAssets, errorIndexs)
+                }
+            }
+            
+            if(config.maxSelectCount > 1){
+                //不做dismiss操作，直接跳转
+                call()
+                return
+            }
+            
+            self?.dismiss(animated: true, completion: {
+                call()
+            })
+            
+            XDataSourcesManager.shared.clearDatas()
+        }
+        
+        var results: [ZLResultModel?] = Array(repeating: nil, count: arrSelectedModels.count)
+        var errorAssets: [PHAsset] = []
+        var errorIndexs: [Int] = []
+        var sucCount = 0
+        let totalCount = arrSelectedModels.count
+        
+       
+        
+        
+        for (i, m) in arrSelectedModels.enumerated() {
+            
+            let operation = ZLFetchImageOperation(model: m, isOriginal: isOriginal) { image, asset in
+                guard !timeout else { return }
+                
+                sucCount += 1
+                
+                if let image = image {
+                    let isEdited = m.editImage != nil && !config.saveNewImageAfterEdit
+                    let model = ZLResultModel(
+                        asset: asset ?? m.asset,
+                        image: image,
+                        isEdited: isEdited,
+                        editModel: isEdited ? m.editImageModel : nil,
+                        index: i
+                    )
+                    results[i] = model
+                    zl_debugPrint("ZLPhotoBrowser: suc request \(i)")
+                } else {
+                    errorAssets.append(m.asset)
+                    errorIndexs.append(i)
+                    zl_debugPrint("ZLPhotoBrowser: failed request \(i)")
+                }
+                
+                guard sucCount >= totalCount else { return }
+                
+                callback(
+                    results.compactMap { $0 },
+                    errorAssets,
+                    errorIndexs
+                )
+            }
+            fetchImageQueue.addOperation(operation)
+        }
+
+    }
+
 }

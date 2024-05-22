@@ -7,8 +7,8 @@
 
 import Foundation
 
-class XDataSourcesManager {
-    static let shared = XDataSourcesManager()
+public class XDataSourcesManager {
+    public static let shared = XDataSourcesManager()
 
     private init() {
         // 私有初始化方法，防止外部实例化
@@ -17,7 +17,7 @@ class XDataSourcesManager {
     var arrSelectedModels: [ZLPhotoModel]?
     
     // 清除 arrSelectedModels 的方法
-      func clearDatas() {
+    public  func clearDatas() {
           arrSelectedModels?.removeAll()
           arrSelectedModels = nil
       }
@@ -42,5 +42,11 @@ extension XDataSourcesManager{
         uiConfig.showSelectedPhotoPreview = false
         uiConfig.languageType = .chineseSimplified
     }
+    
+}
+
+extension NSNotification.Name {
+
+   public static let PuzzleAgainDidChange = NSNotification.Name("PuzzleAgainDidChange")
     
 }

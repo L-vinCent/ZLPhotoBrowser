@@ -32,6 +32,10 @@ class XThumbNailCollectionView:UIView{
 
     }
     
+    deinit{
+        print("XThumbNailCollectionView deinit")
+        
+    }
 //    convenience init() {
 //        self.init()
 //        self.arrSelectedModels = arrSelectedModels
