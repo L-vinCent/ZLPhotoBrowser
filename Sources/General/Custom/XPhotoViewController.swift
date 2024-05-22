@@ -8,7 +8,7 @@
 import Foundation
 import Photos
 
-public class XTempVC:UIViewController{
+public class XPhotoViewController:UIViewController{
     //数据源 所有相册
     private var albumLists: [ZLAlbumListModel] = []
     //scrollow 所有内容view
@@ -148,7 +148,7 @@ public class XTempVC:UIViewController{
 }
 
 //MARK:  处理通知
-extension XTempVC {
+extension XPhotoViewController {
     //重置到初始状态
     @objc private func resetCurrentVCDidChange() {
         arrSelectedModels.removeAll()
@@ -161,7 +161,7 @@ extension XTempVC {
 
 
 //MARK: 底部视图点击事件
-extension XTempVC{
+extension XPhotoViewController{
     
     //底部 删除一张图片
     private func closeTargetModel(index:Int){
@@ -184,7 +184,7 @@ extension XTempVC{
 }
 
 //MARK: 创建滑动内容，数据加载
-extension XTempVC{
+extension XPhotoViewController{
     
     private func loadAlbumList(completion: (() -> Void)? = nil) {
         
@@ -238,7 +238,7 @@ extension XTempVC{
 }
 
 //MARK: scroll 滚动相关方法
-extension XTempVC:UIScrollViewDelegate{
+extension XPhotoViewController:UIScrollViewDelegate{
     // 滚动到指定的index
     private func scrollToIndex(_ index: Int, animated: Bool) {
         let offsetX = scrollView.bounds.width * CGFloat(index)
@@ -254,7 +254,7 @@ extension XTempVC:UIScrollViewDelegate{
     }
 }
 //MARK: view 底部栏状态刷新
-extension XTempVC{
+extension XPhotoViewController{
    
     //刷新自定义视图
     private func resetCustomSelectPreviewStatus() {
@@ -272,7 +272,7 @@ extension XTempVC{
     
 }
 //MARK: 一些私有方法
-extension XTempVC{
+extension XPhotoViewController{
     
     private func reloadAllContentTargetItems(model:ZLPhotoModel?){
         guard let iden = model?.ident else {return}
@@ -283,7 +283,7 @@ extension XTempVC{
 }
 //MARK: 相册选择完成的回调 缩略图-原图
 
-extension XTempVC{
+extension XPhotoViewController{
     
 
     private func requestSelectPhoto() {

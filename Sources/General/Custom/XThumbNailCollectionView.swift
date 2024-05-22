@@ -421,7 +421,7 @@ extension UIView {
         var nextResponder: UIResponder? = self
         while let responder = nextResponder {
             // 判断当前响应者是否为视图控制器
-            if let viewController = responder as? XTempVC {
+            if let viewController = responder as? XPhotoViewController {
                 // 如果是目标类型的视图控制器，设置为找到的视图控制器并退出循环
                 if viewController is T {
                     parentViewController = viewController
