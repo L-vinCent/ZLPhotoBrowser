@@ -11,8 +11,6 @@ import Photos
 public class XTempVC:UIViewController{
     //数据源 所有相册
     private var albumLists: [ZLAlbumListModel] = []
-    //segment用到，当前相册
-    private var albumList: ZLAlbumListModel?
     //scrollow 所有内容view
     private var contentViews:[XThumbNailCollectionView] = []
     //完成的回调数据
@@ -27,7 +25,7 @@ public class XTempVC:UIViewController{
         return queue
     }()
 
-    //存在单例的选中数据源，方便全局调用，在控制器销毁的时候会clear
+    //选中的数据
     var arrSelectedModels: [ZLPhotoModel] {
         get {
             return XDataSourcesManager.shared.arrSelectedModels ?? []
@@ -50,11 +48,11 @@ public class XTempVC:UIViewController{
     
     //titleView
     private lazy var segmentView: XSegmentAlbumView = {
-        let view = XSegmentAlbumView(selectedAlbum: albumList)
+        let view = XSegmentAlbumView()
         view.isHidden = false
         view.clickSegHandle = {[weak self] selectedAlbum in
-            self?.albumList = selectedAlbum
-//            self?.loadPhotos()
+            guard let index = self?.albumLists.firstIndex(where: {$0 == selectedAlbum }) else {return}
+            self?.scrollToIndex(index, animated: true)
         }
         return view
     }()
@@ -75,7 +73,7 @@ public class XTempVC:UIViewController{
     private lazy var scrollView: UIScrollView = {
         let scrollView = UIScrollView(frame: CGRect(x: 0, y: 0, width: view.zl.width, height: view.zl.height))
         scrollView.isPagingEnabled = true
-//        scrollView.delegate = self
+        scrollView.delegate = self
         scrollView.backgroundColor = UIColor.zl.thumbnailBgColor
         scrollView.bounces = true
         scrollView.isScrollEnabled = true
@@ -133,6 +131,7 @@ public class XTempVC:UIViewController{
         loadAlbumList { [weak self] in
             guard let self = self else {return}
             if (self.albumLists.isEmpty) {return}
+            
             self.scrollView.contentSize = CGSize(width: self.view.zl.width * CGFloat(self.albumLists.count), height: 0)
             for (index,item) in albumLists.enumerated(){
                 self.x_createCollectionView(index)
@@ -198,11 +197,9 @@ extension XTempVC{
                 guard let self = self else {return}
                 self.albumLists.removeAll()
                 self.albumLists.append(contentsOf: albumList)
-                if(!self.albumLists.isEmpty){
-                    self.albumList = self.albumLists[0]
-                }
                 ZLMainAsync {
                     completion?()
+                    self.segmentView.arrDataSource = self.albumLists
                 }
             }
         }
@@ -240,6 +237,22 @@ extension XTempVC{
     
 }
 
+//MARK: scroll 滚动相关方法
+extension XTempVC:UIScrollViewDelegate{
+    // 滚动到指定的index
+    private func scrollToIndex(_ index: Int, animated: Bool) {
+        let offsetX = scrollView.bounds.width * CGFloat(index)
+        let offset = CGPoint(x: offsetX, y: 0)
+        scrollView.setContentOffset(offset, animated: animated)
+    }
+    
+    public func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        let pageWidth = scrollView.bounds.width
+        let currentPage = Int(scrollView.contentOffset.x / pageWidth)
+        segmentView.scrollToCurrentIndex(index: currentPage)
+        // 你可以在这里添加更多逻辑来处理滚动结束后的操作
+    }
+}
 //MARK: view 底部栏状态刷新
 extension XTempVC{
    
@@ -254,6 +267,7 @@ extension XTempVC{
         
         self.bottomSelectedPreview.startTitle = startTitle
         self.bottomSelectedPreview.updateStartButton(isEnabled: arrSelectedModels.count > 1)
+        self.segmentView.currentIndex = 0
     }
     
 }

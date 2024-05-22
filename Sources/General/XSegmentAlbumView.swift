@@ -14,7 +14,19 @@ class XSegmentAlbumView:UIView{
     static let height: CGFloat = 50
 
     private var selectedAlbum: ZLAlbumListModel?
-    private var arrDataSource: [ZLAlbumListModel] = []
+    //自定义的XTempVC 里面用到
+    var arrDataSource: [ZLAlbumListModel]?{
+        didSet{
+            reloadChooseState(albums: arrDataSource)
+        }
+    }
+    
+    //当前索引
+    var currentIndex:Int = 0 {
+        didSet{
+            scrollToCurrentIndex(index: currentIndex)
+        }
+    }
 
     lazy var collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
@@ -33,15 +45,11 @@ class XSegmentAlbumView:UIView{
         return cw
     }()
     
-    init(selectedAlbum: ZLAlbumListModel?) {
-        self.selectedAlbum = selectedAlbum
-        super.init(frame: .zero)
+    override init(frame: CGRect) {
+        super.init(frame: frame)
         setupUI()
-        loadAlbumList()
     }
-    
-    
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -56,30 +64,47 @@ class XSegmentAlbumView:UIView{
         self.collectionView.frame = self.bounds
     }
     
-    private func loadAlbumList(completion: (() -> Void)? = nil) {
-        DispatchQueue.global().async {
-            ZLPhotoManager.getPhotoAlbumList(
-                ascending: ZLPhotoUIConfiguration.default().sortAscending,
-                allowSelectImage: ZLPhotoConfiguration.default().allowSelectImage,
-                allowSelectVideo: ZLPhotoConfiguration.default().allowSelectVideo
-            ) { [weak self] albumList in
-                self?.arrDataSource.removeAll()
-                self?.arrDataSource.append(contentsOf: albumList)
-                
-                ZLMainAsync {
-                    completion?()
-                    self?.collectionView.reloadData()
-                }
-            }
+    
+    func reloadChooseState(albums: [ZLAlbumListModel]?){
+        guard let albums = albums else {return}
+        if(!albums.isEmpty){
+            selectedAlbum = albums[0]
         }
+        self.collectionView.reloadData()
+    }
+    
+    func scrollToCurrentIndex(index:Int){
+        guard let albums = self.arrDataSource else {return}
+        selectedAlbum = albums[index]
+        self.collectionView.reloadData()
     }
     
 }
+    //改为外部提供
+//    private func loadAlbumList(completion: (() -> Void)? = nil) {
+//        DispatchQueue.global().async {
+//            ZLPhotoManager.getPhotoAlbumList(
+//                ascending: ZLPhotoUIConfiguration.default().sortAscending,
+//                allowSelectImage: ZLPhotoConfiguration.default().allowSelectImage,
+//                allowSelectVideo: ZLPhotoConfiguration.default().allowSelectVideo
+//            ) { [weak self] albumList in
+//                self?.arrDataSource.removeAll()
+//                self?.arrDataSource.append(contentsOf: albumList)
+//                
+//                ZLMainAsync {
+//                    completion?()
+//                    self?.collectionView.reloadData()
+//                }
+//            }
+//        }
+//    }
+    
+//}
 
 extension XSegmentAlbumView: UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
        
-            return arrDataSource.count
+            return arrDataSource?.count ?? 0
         
     }
     
@@ -90,7 +115,7 @@ extension XSegmentAlbumView: UICollectionViewDelegateFlowLayout, UICollectionVie
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: XSegmentAlbumCell.zl.identifier, for: indexPath) as! XSegmentAlbumCell
-        let model = self.arrDataSource[indexPath.row]
+        let model = self.arrDataSource?[indexPath.row]
         let selected = (model == selectedAlbum) ? true : false
         cell.model = model
         cell.isCellSelected = selected
@@ -99,7 +124,7 @@ extension XSegmentAlbumView: UICollectionViewDelegateFlowLayout, UICollectionVie
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.deselectItem(at: indexPath, animated: true)
-        let model = self.arrDataSource[indexPath.row]
+        guard let model = self.arrDataSource?[indexPath.row] else {return}
         if(selectedAlbum == model) {return}
         selectedAlbum = model
         self.clickSegHandle?(model)

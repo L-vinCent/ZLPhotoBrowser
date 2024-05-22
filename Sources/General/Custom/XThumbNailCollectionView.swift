@@ -21,6 +21,7 @@ class XThumbNailCollectionView:UIView{
 
     
     var selectImageBlock: (([ZLPhotoModel]?,ZLPhotoModel) -> Void)?
+    
 
     var showAddPhotoCell:Bool = false
     var showCameraCell:Bool = false
@@ -151,13 +152,9 @@ extension XThumbNailCollectionView: UICollectionViewDataSource, UICollectionView
 
         
         cell.largeBlock = {[weak self] in
-//            guard let self = self  else {return}
-//            let vc = ZLPhotoPreviewController(photos:self.arrDataSources, index: indexPath.row,showBottomViewAndSelectBtn: false)
-//            vc.backBlock = { [weak self] in
-//                guard let `self` = self, self.hiddenStatusBar else { return }
-//                self.hiddenStatusBar = false
-//            }
-//            self.show(vc, sender: nil)
+            guard let self = self,let sender = self.findParentViewController() else {return}
+            let vc = ZLPhotoPreviewController(photos:self.arrDataSources, index: indexPath.row,showBottomViewAndSelectBtn: false)
+            sender.show(vc, sender: nil)
         }
         
         let chooseed = arrSelectedModels?.containsModel(withIdent: model.ident)
@@ -259,39 +256,7 @@ extension XThumbNailCollectionView: UICollectionViewDataSource, UICollectionView
             cell.btnSelectClick()
             return
         }
-//            
-//        if !config.allowPreviewPhotos {
-//            cell.btnSelectClick()
-//            return
-//        }
-//        
-//        // 不允许选择，且上面有蒙层时，不准点击
-//        if !cell.enableSelect, uiConfig.showInvalidMask {
-//            return
-//        }
-//        
-//        var index = indexPath.row
-//        if !uiConfig.sortAscending {
-//            index -= offset
-//        }
-//        
-//        guard arrDataSources.indices ~= index else {
-//            return
-//        }
-//        
-//        let m = arrDataSources[index]
-//        if shouldDirectEdit(m) {
-//            return
-//        }
-//        
-//        let vc = ZLPhotoPreviewController(photos: arrDataSources, index: index)
-////        vc.backBlock = { [weak self] in
-////            guard let `self` = self, self. else { return }
-////            self.hiddenStatusBar = false
-////        }
-////        show(vc.pa, sender: nil)
-//        let parentVC = findParentViewController()
-//        parentVC?.show(vc, sender: nil)
+
         
     }
     

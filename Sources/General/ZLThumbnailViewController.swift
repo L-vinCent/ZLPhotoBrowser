@@ -69,7 +69,7 @@ class ZLThumbnailViewController: UIViewController {
     }()
     
     private lazy var segmentView: XSegmentAlbumView = {
-        let view = XSegmentAlbumView(selectedAlbum: albumList)
+        let view = XSegmentAlbumView()
         view.isHidden = true
         view.clickSegHandle = {[weak self] selectedAlbum in
             self?.albumList = selectedAlbum
