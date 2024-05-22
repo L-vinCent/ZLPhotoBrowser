@@ -100,16 +100,29 @@ public class XPhotoViewController:UIViewController{
             collectionViewInsetTop += navViewNormalH
         }
         
+        
+        
         var bottomViewH: CGFloat = CustomSelectedBottomPreview.height
+        if(ZLPhotoConfiguration.default().maxSelectCount == 1){
+            bottomViewH = 0
+            bottomSelectedPreview.isHidden = true
+        }else{
+            bottomSelectedPreview.isHidden = false
+        }
+        
         customNav.frame = CGRect(x: 0, y: 0, width: view.bounds.width, height: insets.top + navViewNormalH)
         segmentView.frame = CGRect(x: 0, y: customNav.zl.bottom, width: view.bounds.width, height: XSegmentAlbumView.height)
         bottomSelectedPreview.frame = CGRect(x: 0, y: view.frame.height - insets.bottom - bottomViewH, width: view.bounds.width, height: bottomViewH + insets.bottom)
         scrollView.frame =  CGRect(x: 0, y: segmentView.zl.bottom , width: view.zl.width, height: view.zl.height-customNav.zl.height -  XSegmentAlbumView.height - bottomViewH - insets.bottom)
     }
  
+   public convenience init(with maxSelect:Int = 9) {
+        self.init()
+        XDataSourcesManager.customConfigure(maxSelect: maxSelect)
+    }
+    
     public override func viewDidLoad() {
         super.viewDidLoad()
-        XDataSourcesManager.customConfigure()
         configUI()
         loadContent()
     }
@@ -172,10 +185,6 @@ extension XPhotoViewController{
     }
     //开始拼图
     private func startPuzzle(){
-//        var DoneSelectedModels:[ZLPhotoModel] = []
-//        DoneSelectedModels.append(contentsOf: arrSelectedModels)
-//        DoneImageBlock?(DoneSelectedModels)
-        
         self.requestSelectPhoto()
     }
     
@@ -217,7 +226,12 @@ extension XPhotoViewController{
         let view = XThumbNailCollectionView()
         view.arrDataSources = datas
         view.arrSelectedModels = self.arrSelectedModels
-        view.selectImageBlock = {[weak self] models,model in
+        view.selectImageBlock = {[weak self] model in
+            if (ZLPhotoConfiguration.default().maxSelectCount == 1){
+                //单图模式，直接返回数据
+                self?.requestSelectPhoto()
+                return
+            }
             self?.resetCustomSelectPreviewStatus()
             //刷新所有contentView
             self?.reloadAllContentTargetItems(model: model)
@@ -315,11 +329,14 @@ extension XPhotoViewController{
                 return
             }
             
-            self?.dismiss(animated: true, completion: {
+            if(config.maxSelectCount == 1){
+                //不做dismiss操作，直接跳转
                 call()
-            })
-            
-            XDataSourcesManager.shared.clearDatas()
+                self?.navigationController?.popViewController(animated: true)
+                return
+            }
+
+                        
         }
         
         var results: [ZLResultModel?] = Array(repeating: nil, count: arrSelectedModels.count)
@@ -327,10 +344,6 @@ extension XPhotoViewController{
         var errorIndexs: [Int] = []
         var sucCount = 0
         let totalCount = arrSelectedModels.count
-        
-       
-        
-        
         for (i, m) in arrSelectedModels.enumerated() {
             
             let operation = ZLFetchImageOperation(model: m, isOriginal: isOriginal) { image, asset in

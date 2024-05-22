@@ -20,7 +20,7 @@ class XThumbNailCollectionView:UIView{
     }
 
     
-    var selectImageBlock: (([ZLPhotoModel]?,ZLPhotoModel) -> Void)?
+    var selectImageBlock: ((ZLPhotoModel) -> Void)?
     
 
     var showAddPhotoCell:Bool = false
@@ -183,7 +183,7 @@ extension XThumbNailCollectionView: UICollectionViewDataSource, UICollectionView
                         
                         print("arrSelectedModels 内存地址: \(Unmanaged.passUnretained(self?.arrSelectedModels as AnyObject).toOpaque())")
 
-                        self?.selectImageBlock?(self?.arrSelectedModels,model)
+                        self?.selectImageBlock?(model)
 
 //                        if  config.maxSelectCount == 1, config.x_showCustomSelectedPreview {
 //                            //自定义模式下，单张图直接dismiss

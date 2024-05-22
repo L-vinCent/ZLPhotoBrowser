@@ -25,13 +25,13 @@ public class XDataSourcesManager {
 
 extension XDataSourcesManager{
     //设置相册页数据
-    static func customConfigure(){
+    static func customConfigure(maxSelect:Int = 9){
         let config = ZLPhotoConfiguration.default()
         let uiConfig = ZLPhotoUIConfiguration.default()
         config.allowMixSelect = false
         config.allowEditVideo = false
         config.allowSelectVideo = false
-        config.maxSelectCount = 9
+        config.maxSelectCount = maxSelect
         config.allowTakePhotoInLibrary = false
         config.allowSlideSelect = false
         config.x_showCustomSelectedPreview = true
@@ -42,6 +42,7 @@ extension XDataSourcesManager{
         uiConfig.showSelectedPhotoPreview = false
         uiConfig.languageType = .chineseSimplified
     }
+    
     
 }
 
