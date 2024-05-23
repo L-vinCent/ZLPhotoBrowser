@@ -19,6 +19,8 @@ public class XPhotoViewController:UIViewController{
     public var selectImageErrorBlock: (([PHAsset], [Int]) -> Void)?
     //当前页面销毁时，是否清理单例的数据，默认true ，某些特殊情况不销毁， 比如 拼图->替换照片调相册，选择照片后就不用销毁，因为要保证拼图那个相册页的原始数据
     public var whenDeinitNeedClearSharedData:Bool = true
+    //跳转的承接控制器
+    private weak var sender: UIViewController?
 
     //完成后获取图片的队列
     private lazy var fetchImageQueue: OperationQueue = {
@@ -41,9 +43,11 @@ public class XPhotoViewController:UIViewController{
         let view = XCustomNavView()
         view.isHidden = false
         view.clickBackHandle = {[weak self] in
+            guard let self = self else {return}
             NotificationCenter.default.removeObserver(self,name: .PuzzleAgainDidChange, object: nil)
+//            PHPhotoLibrary.shared().unregisterChangeObserver(self)
 
-            self?.navigationController?.popViewController(animated: true)
+            self.navigationController?.popViewController(animated: true)
         }
         return view
     }()
@@ -159,10 +163,49 @@ public class XPhotoViewController:UIViewController{
     
     deinit {
         print("XTempVC deinit")
+
         if(whenDeinitNeedClearSharedData){
             XDataSourcesManager.shared.clearDatas()
         }
     }
+    
+}
+
+//提供给外部的调用方法
+extension XPhotoViewController{
+     //外部调用的跳转
+    public func show(sender: UIViewController) {
+        self.sender = sender
+        let status = PHPhotoLibrary.authorizationStatus()
+        if status == .restricted || status == .denied {
+            showNoAuthorityAlert()
+        } else if status == .notDetermined {
+            PHPhotoLibrary.requestAuthorization { status in
+                ZLMainAsync {
+                    if status == .denied {
+                        self.showNoAuthorityAlert()
+                    } else if status == .authorized {
+                        sender.navigationController?.pushViewController(self, animated: true)
+                    }
+                }
+            }
+            
+        } else {
+            sender.navigationController?.pushViewController(self, animated: true)
+        }
+        
+//        if #available(iOS 14.0, *), PHPhotoLibrary.authorizationStatus(for: .readWrite) == .limited {
+//            PHPhotoLibrary.shared().register(self)
+//        }
+    }
+
+    private func showNoAuthorityAlert() {
+        let action = ZLCustomAlertAction(title: localLanguageTextValue(.ok), style: .default) { _ in
+            ZLPhotoConfiguration.default().noAuthorityCallback?(.library)
+        }
+        showAlertController(title: nil, message: String(format: localLanguageTextValue(.noPhotoLibratyAuthority), getAppName()), style: .alert, actions: [action], sender: sender)
+    }
+
     
 }
 
@@ -175,8 +218,17 @@ extension XPhotoViewController {
         self.resetCustomSelectPreviewStatus()
 
     }
-
 }
+
+//extension XPhotoViewController: PHPhotoLibraryChangeObserver {
+//    public func photoLibraryDidChange(_ changeInstance: PHChange) {
+//        PHPhotoLibrary.shared().unregisterChangeObserver(self)
+//        ZLMainAsync {
+//            self.loadContent()
+//        }
+//    }
+//}
+
 
 
 //MARK: 底部视图点击事件
@@ -339,6 +391,8 @@ extension XPhotoViewController{
                 //不做dismiss操作，直接跳转
                 call()
                 self?.navigationController?.popViewController(animated: true)
+//                PHPhotoLibrary.shared().unregisterChangeObserver(self)
+
                 return
             }
 
