@@ -17,6 +17,8 @@ public class XPhotoViewController:UIViewController{
     public var DoneImageBlock: (([ZLResultModel]) -> Void)?
     //失败的回调数据
     public var selectImageErrorBlock: (([PHAsset], [Int]) -> Void)?
+    //当前页面销毁时，是否清理单例的数据，默认true ，某些特殊情况不销毁， 比如 拼图->替换照片调相册，选择照片后就不用销毁，因为要保证拼图那个相册页的原始数据
+    public var whenDeinitNeedClearSharedData:Bool = true
 
     //完成后获取图片的队列
     private lazy var fetchImageQueue: OperationQueue = {
@@ -118,6 +120,7 @@ public class XPhotoViewController:UIViewController{
  
    public convenience init(with maxSelect:Int = 9) {
         self.init()
+        XDataSourcesManager.shared.clearDatas()
         XDataSourcesManager.customConfigure(maxSelect: maxSelect)
     }
     
@@ -156,7 +159,9 @@ public class XPhotoViewController:UIViewController{
     
     deinit {
         print("XTempVC deinit")
-        XDataSourcesManager.shared.clearDatas()
+        if(whenDeinitNeedClearSharedData){
+            XDataSourcesManager.shared.clearDatas()
+        }
     }
     
 }

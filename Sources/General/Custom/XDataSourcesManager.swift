@@ -16,11 +16,23 @@ public class XDataSourcesManager {
 
     var arrSelectedModels: [ZLPhotoModel]?
     
+    
     // 清除 arrSelectedModels 的方法
     public  func clearDatas() {
           arrSelectedModels?.removeAll()
           arrSelectedModels = nil
       }
+    // 公有的 getter 方法
+    public  func getArrSelectedModels() -> [ZLPhotoModel]? {
+        return arrSelectedModels
+    }
+    
+    // 公有的 setter 方法
+    public func setArrSelectedModels(_ models: [ZLPhotoModel]?) {
+        guard let models = models else {return}
+        arrSelectedModels = models
+        
+    }
 }
 
 extension XDataSourcesManager{
