@@ -74,6 +74,10 @@ public class XPhotoViewController:UIViewController{
         view.bottomStartClick = {[weak self] in
             self?.startPuzzle()
         }
+        view.bottomHeightChanged = {[weak self] height in
+            self?.heightChange()
+        }
+     
         return view
     }()
     private lazy var scrollView: UIScrollView = {
@@ -107,8 +111,7 @@ public class XPhotoViewController:UIViewController{
         }
         
         
-        
-        var bottomViewH: CGFloat = CustomSelectedBottomPreview.height
+        var bottomViewH: CGFloat = bottomSelectedPreview.height
         if(ZLPhotoConfiguration.default().maxSelectCount == 1){
             bottomViewH = 0
             bottomSelectedPreview.isHidden = true
@@ -120,6 +123,7 @@ public class XPhotoViewController:UIViewController{
         segmentView.frame = CGRect(x: 0, y: customNav.zl.bottom, width: view.bounds.width, height: XSegmentAlbumView.height)
         bottomSelectedPreview.frame = CGRect(x: 0, y: view.frame.height - insets.bottom - bottomViewH, width: view.bounds.width, height: bottomViewH + insets.bottom)
         scrollView.frame =  CGRect(x: 0, y: segmentView.zl.bottom , width: view.zl.width, height: view.zl.height-customNav.zl.height -  XSegmentAlbumView.height - bottomViewH - insets.bottom)
+        
     }
  
    public convenience init(with maxSelect:Int = 9) {
@@ -246,6 +250,12 @@ extension XPhotoViewController{
         self.requestSelectPhoto()
     }
     
+    //开始拼图
+    private func heightChange(){
+        view.setNeedsLayout()
+        view.layoutIfNeeded()
+        updateContentViewsHeight()
+    }
     
     
 }
@@ -306,6 +316,19 @@ extension XPhotoViewController{
         self.scrollView.addSubview(view)
         self.contentViews.append(view)
     }
+    
+    //更新视图高度
+    func updateContentViewsHeight() {
+        let H = scrollView.frame.height
+         for (index, view) in contentViews.enumerated() {
+             let X = scrollView.frame.width * CGFloat(index)
+             let Y: CGFloat = 0
+             let W = scrollView.frame.width
+             view.frame = CGRect(x: X, y: Y, width: W, height: scrollView.frame.height)
+         }
+         // 更新 scrollView 的 contentSize
+         scrollView.contentSize = CGSize(width: scrollView.frame.width * CGFloat(contentViews.count), height: H)
+     }
     
 }
 

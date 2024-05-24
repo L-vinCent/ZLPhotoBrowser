@@ -21,8 +21,6 @@ class XThumbNailCollectionView:UIView{
 
     
     var selectImageBlock: ((ZLPhotoModel) -> Void)?
-    
-
     var showAddPhotoCell:Bool = false
     var showCameraCell:Bool = false
 
