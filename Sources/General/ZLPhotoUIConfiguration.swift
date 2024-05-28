@@ -61,7 +61,7 @@ public class ZLPhotoUIConfiguration: NSObject {
     public var showStatusBarInPreviewInterface = false
     
     /// HUD style. Defaults to dark.
-    public var hudStyle: ZLProgressHUD.Style = .dark
+    public var hudStyle: ZLProgressHUD.Style = .custom
     
     /// Adjust Slider Type
     public var adjustSliderType: ZLAdjustSliderType = .vertical

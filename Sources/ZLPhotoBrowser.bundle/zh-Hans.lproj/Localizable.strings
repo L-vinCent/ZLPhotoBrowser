@@ -23,7 +23,7 @@
 
 "noPhotoTips" = "无照片";
 
-"hudLoading" = "正在加载";
+"hudLoading" = "加载中...";
 "hudProcessing" = "正在处理";
 
 "exceededMaxSelectCount" = "最多只能选择%ld张图片";

@@ -36,7 +36,7 @@ public class ZLProgressHUD: UIView {
         label.textAlignment = .center
         label.numberOfLines = 2
         label.textColor = style.textColor
-        label.font = .zl.font(ofSize: 16)
+        label.font = .zl.font(ofSize: 12)
         label.text = localLanguageTextValue(.hudLoading)
         label.lineBreakMode = .byWordWrapping
         label.minimumScaleFactor = 0.5
@@ -82,7 +82,7 @@ public class ZLProgressHUD: UIView {
         loadingView.frame = CGRect(x: 135 / 2 - 20, y: 27, width: 40, height: 40)
         view.addSubview(loadingView)
         
-        titleLabel.frame = CGRect(x: 10, y: 70, width: view.bounds.width - 20, height: 60)
+        titleLabel.frame = CGRect(x: 10, y: 60, width: view.bounds.width - 20, height: 60)
         view.addSubview(titleLabel)
         
         addSubview(view)
@@ -155,7 +155,8 @@ public extension ZLProgressHUD {
         case lightBlur
         case dark
         case darkBlur
-        
+        case custom
+
         var bgColor: UIColor {
             switch self {
             case .light:
@@ -166,7 +167,11 @@ public extension ZLProgressHUD {
                 return UIColor.white.withAlphaComponent(0.8)
             case .darkBlur:
                 return UIColor.darkGray.withAlphaComponent(0.8)
+            case .custom:
+                return UIColor.clear
+
             }
+        
         }
         
         var icon: UIImage? {
@@ -175,7 +180,11 @@ public extension ZLProgressHUD {
                 return .zl.getImage("zl_loading_dark")
             case .dark, .darkBlur:
                 return .zl.getImage("zl_loading_light")
+            case .custom:
+                return .zl.getImage("x_icon_hud_loading")
+
             }
+            
         }
         
         var textColor: UIColor {
@@ -184,7 +193,10 @@ public extension ZLProgressHUD {
                 return .black
             case .dark, .darkBlur:
                 return .white
+            case .custom:
+                return .white
             }
+        
         }
         
         var blurEffectStyle: UIBlurEffect.Style? {
@@ -195,7 +207,10 @@ public extension ZLProgressHUD {
                 return .extraLight
             case .darkBlur:
                 return .dark
+            case .custom:
+                return nil
             }
+            
         }
     }
     
