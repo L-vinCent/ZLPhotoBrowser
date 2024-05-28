@@ -939,7 +939,8 @@ class ZLThumbnailViewController: UIViewController {
         }
         self.bottomSelectedPreview.arrSelectedModels = nav.arrSelectedModels
 
-        var startTitle = "开始拼图"
+        var startTitle = ZLPhotoUIConfiguration.default().x_bottomCustomBtnTitle
+
         if(!nav.arrSelectedModels.isEmpty){
             startTitle += "(" + String(nav.arrSelectedModels.count) + ")"
         }

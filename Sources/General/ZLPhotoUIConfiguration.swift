@@ -71,6 +71,8 @@ public class ZLPhotoUIConfiguration: NSObject {
     /// Custom alert class. Defaults to nil.
     public var customAlertClass: ZLCustomAlertProtocol.Type?
     
+    
+    
     private var pri_columnCount = 4
     /// The column count when iPhone is in portait mode. Minimum is 2, maximum is 6. Defaults to 4.
     /// ```
@@ -480,7 +482,10 @@ public class ZLPhotoUIConfiguration: NSObject {
     /// 编辑器中垃圾箱高亮状态下的颜色
     public var trashCanBackgroundTintColor: UIColor = .zl.rgba(241, 79, 79, 0.98)
     
-    
+    //自定义页面的标题和提示语
+    public var x_bottomTipsLabelTitle:String = "请选择2~9张图片"
+    public var x_bottomCustomBtnTitle:String = "开始拼图"
+
     //自定义的相册底部预览视图提示文字颜色 gray300
     public var x_CustomTitleColor300: UIColor = .zl.rgba(212, 212, 212, 1.0)
     

@@ -37,7 +37,7 @@ class CustomSelectedBottomPreview: UIView {
     private lazy var tipsLabel: UILabel = {
         let label = UILabel()
         label.font = .zl.PingFangLight(size: 13)
-        label.text = "请选择2~9张图片"
+        label.text = ZLPhotoUIConfiguration.default().x_bottomTipsLabelTitle
         label.textColor = ZLPhotoUIConfiguration.default().x_CustomTitleColor300
         label.adjustsFontSizeToFitWidth = true
         return label
@@ -46,7 +46,8 @@ class CustomSelectedBottomPreview: UIView {
     
     lazy var startBtn: UIButton = {
         let btn = UIButton(type: .custom)
-        btn.setTitle("开始拼图", for: .normal)
+        let title = ZLPhotoUIConfiguration.default().x_bottomCustomBtnTitle
+        btn.setTitle(title, for: .normal)
         btn.titleLabel?.font = .zl.PingFangRegular(size: 14)
         btn.backgroundColor = ZLPhotoUIConfiguration.default().x_CustomSelectedBtnbgColor
         btn.addTarget(self, action: #selector(startBtnClick), for: .touchUpInside)

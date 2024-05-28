@@ -355,7 +355,8 @@ extension XPhotoViewController{
     private func resetCustomSelectPreviewStatus() {
         
         self.bottomSelectedPreview.arrSelectedModels = arrSelectedModels
-        var startTitle = "开始拼图"
+        var startTitle = ZLPhotoUIConfiguration.default().x_bottomCustomBtnTitle
+
         if(!arrSelectedModels.isEmpty){
             startTitle += "(" + String(arrSelectedModels.count) + ")"
         }
