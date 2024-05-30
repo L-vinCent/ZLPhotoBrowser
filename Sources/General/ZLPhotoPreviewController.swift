@@ -1166,8 +1166,9 @@ class ZLPhotoPreviewSelectedViewCell: UICollectionViewCell {
         let btn = ZLEnlargeButton(type:.custom)
         btn.setImage(.zl.getImage("x_edit_delete"), for: .normal)
         btn.addTarget(self, action: #selector(buttonTap), for: .touchUpInside)
-        btn.enlargeInsets = UIEdgeInsets(top: 5, left: 10, bottom: 10, right: 5)
+//        btn.enlargeInsets = UIEdgeInsets(top: 5, left: 10, bottom: 10, right: 5)
         btn.isHidden = true
+        btn.isUserInteractionEnabled = false
         return btn
     }()
     
