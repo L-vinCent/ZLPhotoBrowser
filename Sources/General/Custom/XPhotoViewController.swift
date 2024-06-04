@@ -21,7 +21,7 @@ public class XPhotoViewController:UIViewController{
     public var whenDeinitNeedClearSharedData:Bool = true
     //跳转的承接控制器
     private weak var sender: UIViewController?
-
+    
     //完成后获取图片的队列
     private lazy var fetchImageQueue: OperationQueue = {
         let queue = OperationQueue()

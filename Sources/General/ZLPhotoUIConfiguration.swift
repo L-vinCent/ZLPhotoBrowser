@@ -141,6 +141,10 @@ public class ZLPhotoUIConfiguration: NSObject {
     /// Timeout for image parsing. Defaults to 20.
     public var timeout: TimeInterval = 20
     
+    
+    //是否显示已添加标识
+    public  var showAddFlag: Bool = true
+
     // MARK: Navigation and bottom tool bar
     
     /// The blur effect of the navigation bar in the album list
