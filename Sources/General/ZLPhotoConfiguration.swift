@@ -265,6 +265,10 @@ public class ZLPhotoConfiguration: NSObject {
     //显示自定义相册页,走底部删除的一套交互
     public var x_showCustomSelectedPreview: Bool = false
     
+    //最少选择的相册数
+    public var x_MinSelevtedPhoto: Int = 2
+
+    
 //    //不显示底部view
 //    public var x_hiddenBottomCustomView: Bool = false
     

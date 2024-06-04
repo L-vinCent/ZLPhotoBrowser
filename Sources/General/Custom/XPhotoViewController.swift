@@ -362,7 +362,7 @@ extension XPhotoViewController{
         }
         
         self.bottomSelectedPreview.startTitle = startTitle
-        self.bottomSelectedPreview.updateStartButton(isEnabled: arrSelectedModels.count > 1)
+        self.bottomSelectedPreview.updateStartButton(isEnabled: arrSelectedModels.count >= ZLPhotoConfiguration.default().x_MinSelevtedPhoto)
         self.segmentView.currentIndex = 0
     }
     
