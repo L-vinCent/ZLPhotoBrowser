@@ -64,6 +64,37 @@ public class ZLPhotoManager: NSObject {
             }, completionHandler: completionHandler)
         }
     }
+    /// Save data to album.
+
+    public class func saveImageToAlbum(data: Data,dpi: Int = 300, completion: ((Bool, PHAsset?) -> Void)?) {
+        let status = PHPhotoLibrary.authorizationStatus()
+        
+        if status == .denied || status == .restricted {
+            completion?(false, nil)
+            return
+        }
+        var placeholderAsset: PHObjectPlaceholder?
+        let completionHandler: ((Bool, Error?) -> Void) = { suc, _ in
+            if suc {
+                let asset = self.getAsset(from: placeholderAsset?.localIdentifier)
+                ZLMainAsync {
+                    completion?(suc, asset)
+                }
+            } else {
+                ZLMainAsync {
+                    completion?(false, nil)
+                }
+            }
+        }
+
+        PHPhotoLibrary.shared().performChanges({
+            let newAssetRequest = PHAssetCreationRequest.forAsset()
+            newAssetRequest.addResource(with: .photo, data: data, options: nil)
+            
+        }, completionHandler: completionHandler)
+        
+    }
+    
     
     /// Save video to album.
     public class func saveVideoToAlbum(url: URL, completion: ((Bool, PHAsset?) -> Void)?) {
