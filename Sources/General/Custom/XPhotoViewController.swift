@@ -126,8 +126,9 @@ public class XPhotoViewController:UIViewController{
         
     }
  
-   public convenience init(with maxSelect:Int = 9) {
+    public convenience init(with maxSelect:Int = 9,hudStyle:ZLProgressHUD.Style = .custom) {
         self.init()
+        ZLPhotoUIConfiguration.default().hudStyle = hudStyle
         XDataSourcesManager.shared.clearDatas()
         XDataSourcesManager.customConfigure(maxSelect: maxSelect)
     }
@@ -151,6 +152,7 @@ public class XPhotoViewController:UIViewController{
     }
     
     private func loadContent(){
+
         let hud = ZLProgressHUD.show(timeout: ZLPhotoUIConfiguration.default().timeout)
         hud.show()
         loadAlbumList { [weak self] in

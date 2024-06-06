@@ -155,7 +155,8 @@ public extension ZLProgressHUD {
         case lightBlur
         case dark
         case darkBlur
-        case custom
+        case custom // 证件照
+        case magic //魔术手
 
         var bgColor: UIColor {
             switch self {
@@ -167,7 +168,7 @@ public extension ZLProgressHUD {
                 return UIColor.white.withAlphaComponent(0.8)
             case .darkBlur:
                 return UIColor.darkGray.withAlphaComponent(0.8)
-            case .custom:
+            case .custom ,.magic:
                 return UIColor.clear
 
             }
@@ -182,7 +183,8 @@ public extension ZLProgressHUD {
                 return .zl.getImage("zl_loading_light")
             case .custom:
                 return .zl.getImage("x_icon_hud_loading")
-
+            case .magic:
+                return .zl.getImage("x_icon_hud_loading_magic")
             }
             
         }
@@ -193,7 +195,7 @@ public extension ZLProgressHUD {
                 return .black
             case .dark, .darkBlur:
                 return .white
-            case .custom:
+            case .custom ,.magic:
                 return .white
             }
         
@@ -207,7 +209,7 @@ public extension ZLProgressHUD {
                 return .extraLight
             case .darkBlur:
                 return .dark
-            case .custom:
+            case .custom ,.magic:
                 return nil
             }
             
