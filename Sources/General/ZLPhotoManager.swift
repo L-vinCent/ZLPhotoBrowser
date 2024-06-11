@@ -30,7 +30,7 @@ import Photos
 @objcMembers
 public class ZLPhotoManager: NSObject {
     /// Save image to album.
-    public class func saveImageToAlbum(image: UIImage, completion: ((Bool, PHAsset?) -> Void)?) {
+    public class func saveImageToAlbum(image: UIImage,name:String? = "证件照", completion: ((Bool, PHAsset?) -> Void)?) {
         let status = PHPhotoLibrary.authorizationStatus()
         
         if status == .denied || status == .restricted {
@@ -54,7 +54,9 @@ public class ZLPhotoManager: NSObject {
         if image.zl.hasAlphaChannel(), let data = image.pngData() {
             PHPhotoLibrary.shared().performChanges({
                 let newAssetRequest = PHAssetCreationRequest.forAsset()
-                newAssetRequest.addResource(with: .photo, data: data, options: nil)
+                let options = PHAssetResourceCreationOptions()
+                options.originalFilename = name
+                newAssetRequest.addResource(with: .photo, data: data, options: options)
                 placeholderAsset = newAssetRequest.placeholderForCreatedAsset
             }, completionHandler: completionHandler)
         } else {
@@ -66,7 +68,7 @@ public class ZLPhotoManager: NSObject {
     }
     /// Save data to album.
 
-    public class func saveImageToAlbum(data: Data,dpi: Int = 300, completion: ((Bool, PHAsset?) -> Void)?) {
+    public class func saveImageToAlbum(data: Data,name:String? = "证件照" ,completion: ((Bool, PHAsset?) -> Void)?) {
         let status = PHPhotoLibrary.authorizationStatus()
         
         if status == .denied || status == .restricted {
@@ -89,7 +91,9 @@ public class ZLPhotoManager: NSObject {
 
         PHPhotoLibrary.shared().performChanges({
             let newAssetRequest = PHAssetCreationRequest.forAsset()
-            newAssetRequest.addResource(with: .photo, data: data, options: nil)
+            let options = PHAssetResourceCreationOptions()
+            options.originalFilename = name
+            newAssetRequest.addResource(with: .photo, data: data, options: options)
             
         }, completionHandler: completionHandler)
         
