@@ -332,6 +332,13 @@ class ZLThumbnailPhotoCell: UICollectionViewCell {
         smallImageRequestID = ZLPhotoManager.fetchImage(for: model.asset, size: size, completion: { [weak self] image, isDegraded in
             if self?.imageIdentifier == self?.model.ident {
                 self?.imageView.image = image
+                self?.imageView.contentMode = .scaleAspectFill
+//                self?.largeSelect.isHidden = false
+
+            }else{
+                self?.imageView.image = .zl.getImage("zl_defaultIDPhoto")
+                self?.imageView.contentMode = .center
+//                self?.largeSelect.isHidden = true
             }
             if !isDegraded {
                 self?.smallImageRequestID = PHInvalidImageRequestID

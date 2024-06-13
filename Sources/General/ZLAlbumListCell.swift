@@ -199,7 +199,7 @@ class ZLAlbumListCell: UITableViewCell {
             ZLPhotoManager.fetchImage(for: asset, size: CGSize(width: w, height: w)) { [weak self] image, _ in
                 if self?.imageIdentifier == self?.model.headImageAsset?.localIdentifier {
                     let defaultName = self?.handle() ?? "zl_defaultphoto"
-                    self?.coverImageView.image = image ?? .zl.getImage(defaultName)
+                    self?.coverImageView.image =  .zl.getImage(defaultName)
                 }
             }
         }
