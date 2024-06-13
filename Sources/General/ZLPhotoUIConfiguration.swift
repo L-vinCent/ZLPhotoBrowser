@@ -35,6 +35,12 @@ public class ZLPhotoUIConfiguration: NSObject {
         case image
     }
     
+    @objc public enum WorkMode: Int {
+        case photo // 证件照
+        case magic // 魔术手
+        
+    }
+    
     private static var single = ZLPhotoUIConfiguration()
     
     public class func `default`() -> ZLPhotoUIConfiguration {
@@ -52,6 +58,8 @@ public class ZLPhotoUIConfiguration: NSObject {
     
     public var style: ZLPhotoBrowserStyle = .embedAlbumList
     
+    public var workMode: WorkMode = .photo
+
     public var statusBarStyle: UIStatusBarStyle = .lightContent
     
     /// text: Cancel.  image: 'x'. Defaults to image.

@@ -198,9 +198,23 @@ class ZLAlbumListCell: UITableViewCell {
             let w = bounds.height * 2.5
             ZLPhotoManager.fetchImage(for: asset, size: CGSize(width: w, height: w)) { [weak self] image, _ in
                 if self?.imageIdentifier == self?.model.headImageAsset?.localIdentifier {
-                    self?.coverImageView.image = image ?? .zl.getImage("zl_defaultphoto")
+                    let defaultName = self?.handle() ?? "zl_defaultphoto"
+                    self?.coverImageView.image = image ?? .zl.getImage(defaultName)
                 }
             }
         }
     }
+    
+    @objc private func handle() -> String {
+        let workMode = ZLPhotoUIConfiguration.default().workMode
+        // 调用私有方法处理不同的工作模式
+        switch workMode {
+        case .photo:
+            return "zl_defaultIDPhoto"
+        case .magic:
+            return "zl_defaultphoto"
+        }
+    }
+    
+    
 }
