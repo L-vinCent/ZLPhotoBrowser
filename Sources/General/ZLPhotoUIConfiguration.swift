@@ -151,7 +151,7 @@ public class ZLPhotoUIConfiguration: NSObject {
     
     
     //是否显示已添加标识
-    public  var showAddFlag: Bool = true
+//    public  var showAddFlag: Bool = true
 
     // MARK: Navigation and bottom tool bar
     

@@ -183,8 +183,7 @@ extension XThumbNailCollectionView: UICollectionViewDataSource, UICollectionView
                 downloadAssetIfNeed(model: model, sender: sender) {
                     if self?.shouldDirectEdit(model) == false {
                         model.isSelected = true
-//                        self?.arrSelectedModels?.append(model)
-//                        self?.addPhotoModel(model)
+
                         self?.dataManager.add(model)
 
                         block(true)

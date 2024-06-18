@@ -141,7 +141,7 @@ class ZLThumbnailPhotoCell: UICollectionViewCell {
     var chooseed:Bool?{
         didSet{
             guard let chooseed = chooseed else {return}
-            if(!ZLPhotoUIConfiguration.default().showAddFlag){
+            if(ZLPhotoConfiguration.default().maxSelectCount == 1){
                 self.chooseLabel.isHidden = true
                 return
             }

@@ -21,8 +21,8 @@ public class XPhotoViewController:UIViewController{
 //    public var whenDeinitNeedClearSharedData:Bool = true
     //跳转的承接控制器
     private weak var sender: UIViewController?
-    
-    var arrSelectedModels: [ZLPhotoModel] {
+    private var dataManager:XSelectedModelsManager = XSelectedModelsManager()
+    private var arrSelectedModels: [ZLPhotoModel] {
         return dataManager.arrSelectedModels
     }
     
@@ -33,7 +33,6 @@ public class XPhotoViewController:UIViewController{
         return queue
     }()
 
-    private var dataManager:XSelectedModelsManager = XSelectedModelsManager()
 
     
     
