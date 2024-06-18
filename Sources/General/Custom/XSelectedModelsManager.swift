@@ -7,35 +7,42 @@
 
 import Foundation
 
-public class XDataSourcesManager {
-    public static let shared = XDataSourcesManager()
+public class XSelectedModelsManager {
 
-    private init() {
-        // 私有初始化方法，防止外部实例化
-    }
+    private(set) var arrSelectedModels: [ZLPhotoModel] = []
 
-    var arrSelectedModels: [ZLPhotoModel]?
-    
-    
-    // 清除 arrSelectedModels 的方法
-    public  func clearDatas() {
-          arrSelectedModels?.removeAll()
-          arrSelectedModels = nil
-      }
-    // 公有的 getter 方法
-    public  func getArrSelectedModels() -> [ZLPhotoModel]? {
-        return arrSelectedModels
+    var onSelectionChanged: (() -> Void)?
+
+    // 访问和修改 arrSelectedModels 的示例
+    func add(_ model: ZLPhotoModel) {
+        arrSelectedModels.append(model)
+        onSelectionChanged?()
     }
     
-    // 公有的 setter 方法
-    public func setArrSelectedModels(_ models: [ZLPhotoModel]?) {
-        guard let models = models else {return}
-        arrSelectedModels = models
-        
+    func remove(_ model: ZLPhotoModel) {
+        if let index = arrSelectedModels.firstIndex(where: { $0 == model }) {
+            arrSelectedModels.remove(at: index)
+            onSelectionChanged?()
+        }
     }
+    
+    func removeAtIndex(_ index: Int) {
+        guard index >= 0 && index < arrSelectedModels.count else {
+            print("Index out of bounds")
+            return
+        }
+        arrSelectedModels.remove(at: index)
+        onSelectionChanged?()
+    }
+    
+    func removeAll() {
+        arrSelectedModels.removeAll()
+        onSelectionChanged?()
+    }
+    
 }
 
-extension XDataSourcesManager{
+extension XSelectedModelsManager{
     //设置相册页数据
     static func customConfigure(maxSelect:Int = 9){
         let config = ZLPhotoConfiguration.default()

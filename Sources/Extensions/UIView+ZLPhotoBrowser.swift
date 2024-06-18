@@ -91,4 +91,30 @@ extension ZLPhotoBrowserWrapper where Base: UIView {
         base.layer.shadowOpacity = opacity
         base.layer.shadowOffset = offset
     }
+    
+    func findParentViewController<T: UIViewController>() -> T? {
+        // 定义一个变量用于保存找到的视图控制器
+        var parentViewController: UIViewController? = nil
+        
+        // 从当前视图开始，逐级向上查找父视图，直到找到包含指定类型控制器的视图控制器或到达顶层视图
+        var nextResponder: UIResponder? = base
+        while let responder = nextResponder {
+            // 判断当前响应者是否为视图控制器
+            if let viewController = responder as? XPhotoViewController {
+                // 如果是目标类型的视图控制器，设置为找到的视图控制器并退出循环
+                if viewController is T {
+                    parentViewController = viewController
+                    break
+                }
+            }
+            
+            // 如果当前响应者不是视图控制器，继续向上查找父响应者
+            nextResponder = responder.next
+        }
+        
+        // 将找到的视图控制器转换为指定类型返回
+        return parentViewController as? T
+    }
 }
+
+

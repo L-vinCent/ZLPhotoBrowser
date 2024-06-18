@@ -7,29 +7,38 @@
 
 import Foundation
 
+
+
+
 class XThumbNailCollectionView:UIView{
     var offset: Int = 0
     
-    var arrSelectedModels: [ZLPhotoModel]? {
-        get {
-            return XDataSourcesManager.shared.arrSelectedModels
-        }
-        set {
-            XDataSourcesManager.shared.arrSelectedModels = newValue
-        }
+    var dataManager:XSelectedModelsManager
+    var arrSelectedModels: [ZLPhotoModel] {
+        return dataManager.arrSelectedModels
     }
 
-    
+
     var selectImageBlock: ((ZLPhotoModel) -> Void)?
     var showAddPhotoCell:Bool = false
     var showCameraCell:Bool = false
 
 
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        addSubview(self.collectionView)
+//    override init(frame: CGRect) {
+//        super.init(frame: frame)
+//        addSubview(self.collectionView)
+//    }
+    init(dataManager: XSelectedModelsManager) {
+          self.dataManager = dataManager
+          super.init(frame: .zero)
+          addSubview(self.collectionView)
 
-    }
+      }
+      
+      required init?(coder: NSCoder) {
+          fatalError("init(coder:) has not been implemented")
+      }
+    
     
     deinit{
         print("XThumbNailCollectionView deinit")
@@ -43,10 +52,14 @@ class XThumbNailCollectionView:UIView{
 //        addSubview(self.collectionView)
 //    }
     
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
+//    private func addPhotoModel(_ model: ZLPhotoModel) {
+//        dataManager.add(model)
+//    }
+//    
+//    private func removeAllModel() {
+//        dataManager.removeAll()
+//    }
+    
     override func layoutSubviews() {
         super.layoutSubviews()
         collectionView.frame = self.bounds
@@ -123,7 +136,7 @@ extension XThumbNailCollectionView: UICollectionViewDataSource, UICollectionView
                 cell.startCapture()
             }
             
-            cell.isEnable = (arrSelectedModels?.count ?? 0) < config.maxSelectCount
+            cell.isEnable = (arrSelectedModels.count ?? 0) < config.maxSelectCount
             
             return cell
         }
@@ -150,19 +163,19 @@ extension XThumbNailCollectionView: UICollectionViewDataSource, UICollectionView
 
         
         cell.largeBlock = {[weak self] in
-            guard let self = self,let sender = self.findParentViewController() else {return}
+            guard let self = self,let sender = self.zl.findParentViewController() else {return}
             let vc = ZLPhotoPreviewController(photos:self.arrDataSources, index: indexPath.row,showBottomViewAndSelectBtn: false)
             sender.show(vc, sender: nil)
         }
         
-        let chooseed = arrSelectedModels?.containsModel(withIdent: model.ident)
+        let chooseed = arrSelectedModels.containsModel(withIdent: model.ident)
         cell.chooseed = chooseed
         
         
         cell.selectedBlock = { [weak self] block in
             if !model.isSelected || config.x_showCustomSelectedPreview{
-                let sender = self?.findParentViewController()
-                let currentSelectCount = self?.arrSelectedModels?.count ?? 0
+                let sender = self?.zl.findParentViewController()
+                let currentSelectCount = self?.arrSelectedModels.count ?? 0
                 guard canAddModel(model, currentSelectCount: currentSelectCount, sender:sender ) else {
                     return
                 }
@@ -170,10 +183,13 @@ extension XThumbNailCollectionView: UICollectionViewDataSource, UICollectionView
                 downloadAssetIfNeed(model: model, sender: sender) {
                     if self?.shouldDirectEdit(model) == false {
                         model.isSelected = true
-                        self?.arrSelectedModels?.append(model)
+//                        self?.arrSelectedModels?.append(model)
+//                        self?.addPhotoModel(model)
+                        self?.dataManager.add(model)
+
                         block(true)
                         
-                        let chooseed = self?.arrSelectedModels?.containsModel(withIdent: model.ident)
+                        let chooseed = self?.arrSelectedModels.containsModel(withIdent: model.ident)
                         cell.chooseed = chooseed
                         
                         config.didSelectAsset?(model.asset)
@@ -200,7 +216,8 @@ extension XThumbNailCollectionView: UICollectionViewDataSource, UICollectionView
                 }
             } else {
                 model.isSelected = false
-                self?.arrSelectedModels?.removeAll { $0 == model }
+//                self?.removeAllModel()
+                self?.dataManager.remove(model)
                 block(false)
                 
                 config.didDeselectAsset?(model.asset)
@@ -211,7 +228,7 @@ extension XThumbNailCollectionView: UICollectionViewDataSource, UICollectionView
         }
         
         if config.showSelectedIndex,
-           let index = arrSelectedModels?.firstIndex(where: { $0 == model }) {
+           let index = arrSelectedModels.firstIndex(where: { $0 == model }) {
             setCellIndex(cell, showIndexLabel: true, index: index + config.initialIndex)
         } else {
             cell.indexLabel.isHidden = true
@@ -396,7 +413,7 @@ extension XThumbNailCollectionView: UICollectionViewDataSource, UICollectionView
     }
     
     private func refreshCameraCellStatus() {
-        let count = arrSelectedModels?.count ?? 0
+        let count = dataManager.arrSelectedModels.count ?? 0
         
         for cell in collectionView.visibleCells {
             if let cell = cell as? ZLCameraCell {
@@ -410,28 +427,5 @@ extension XThumbNailCollectionView: UICollectionViewDataSource, UICollectionView
 
 
 
-extension UIView {
-    func findParentViewController<T: UIViewController>() -> T? {
-        // 定义一个变量用于保存找到的视图控制器
-        var parentViewController: UIViewController? = nil
-        
-        // 从当前视图开始，逐级向上查找父视图，直到找到包含指定类型控制器的视图控制器或到达顶层视图
-        var nextResponder: UIResponder? = self
-        while let responder = nextResponder {
-            // 判断当前响应者是否为视图控制器
-            if let viewController = responder as? XPhotoViewController {
-                // 如果是目标类型的视图控制器，设置为找到的视图控制器并退出循环
-                if viewController is T {
-                    parentViewController = viewController
-                    break
-                }
-            }
-            
-            // 如果当前响应者不是视图控制器，继续向上查找父响应者
-            nextResponder = responder.next
-        }
-        
-        // 将找到的视图控制器转换为指定类型返回
-        return parentViewController as? T
-    }
-}
+
+
