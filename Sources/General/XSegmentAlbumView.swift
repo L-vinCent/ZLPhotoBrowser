@@ -74,7 +74,7 @@ class XSegmentAlbumView:UIView{
     }
     
     func scrollToCurrentIndex(index:Int){
-        guard let albums = self.arrDataSource else {return}
+        guard let albums = self.arrDataSource,albums.indices.contains(index) else {return}
         selectedAlbum = albums[index]
         self.collectionView.reloadData()
     }
