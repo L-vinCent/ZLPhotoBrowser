@@ -194,7 +194,7 @@ extension XThumbNailCollectionView: UICollectionViewDataSource, UICollectionView
                         config.didSelectAsset?(model.asset)
                         self?.refreshCellIndexAndMaskView()
                         
-                        print("arrSelectedModels 内存地址: \(Unmanaged.passUnretained(self?.arrSelectedModels as AnyObject).toOpaque())")
+//                        print("arrSelectedModels 内存地址: \(Unmanaged.passUnretained(self?.arrSelectedModels as AnyObject).toOpaque())")
 
                         self?.selectImageBlock?(model)
 

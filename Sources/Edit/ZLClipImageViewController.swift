@@ -40,10 +40,10 @@ extension ZLClipImageViewController {
     }
 }
 
-class ZLClipImageViewController: UIViewController {
+public class ZLClipImageViewController: UIViewController {
     private static let bottomToolViewH: CGFloat = 90
     
-    private static let clipRatioItemSize = CGSize(width: 60, height: 70)
+    private static let clipRatioItemSize = CGSize(width: 48, height: 70)
     
     /// 取消裁剪时动画frame
     private var cancelClipAnimateFrame: CGRect = .zero
@@ -52,7 +52,7 @@ class ZLClipImageViewController: UIViewController {
     
     private let originalImage: UIImage
     
-    private let clipRatios: [ZLImageClipRatio]
+    private let clipRatios :[XCropProportionEnum] = XCropProportionEnum.allCases
     
     private let dimClippedAreaDuringAdjustments: Bool
 
@@ -88,14 +88,14 @@ class ZLClipImageViewController: UIViewController {
         let view = ZLClipShadowView()
         view.isUserInteractionEnabled = false
         view.backgroundColor = .clear
-        view.isCircle = selectedRatio.isCircle
+//        view.isCircle = selectedRatio.isCircle
         return view
     }()
     
     private lazy var overlayView: ZLClipOverlayView = {
         let view = ZLClipOverlayView()
         view.isUserInteractionEnabled = false
-        view.isCircle = selectedRatio.isCircle
+//        view.isCircle = selectedRatio.isCircle
         return view
     }()
     
@@ -119,13 +119,13 @@ class ZLClipImageViewController: UIViewController {
     
     private lazy var bottomToolLineView: UIView = {
         let view = UIView()
-        view.backgroundColor = .zl.rgba(240, 240, 240)
+        view.backgroundColor = .zl.rgba(240, 240, 240,0.1)
         return view
     }()
     
     private lazy var cancelBtn: ZLEnlargeButton = {
         let btn = ZLEnlargeButton(type: .custom)
-        btn.setImage(.zl.getImage("zl_close"), for: .normal)
+        btn.setImage(.zl.getImage("crop_close"), for: .normal)
         btn.adjustsImageWhenHighlighted = false
         btn.enlargeInset = 20
         btn.addTarget(self, action: #selector(cancelBtnClick), for: .touchUpInside)
@@ -144,7 +144,7 @@ class ZLClipImageViewController: UIViewController {
     
     lazy var doneBtn: ZLEnlargeButton = {
         let btn = ZLEnlargeButton(type: .custom)
-        btn.setImage(.zl.getImage("zl_right"), for: .normal)
+        btn.setImage(.zl.getImage("crop_sure"), for: .normal)
         btn.adjustsImageWhenHighlighted = false
         btn.enlargeInset = 20
         btn.addTarget(self, action: #selector(doneBtnClick), for: .touchUpInside)
@@ -157,6 +157,7 @@ class ZLClipImageViewController: UIViewController {
         btn.adjustsImageWhenHighlighted = false
         btn.enlargeInset = 20
         btn.addTarget(self, action: #selector(rotateBtnClick), for: .touchUpInside)
+        btn.isHidden = true
         return btn
     }()
     
@@ -190,12 +191,7 @@ class ZLClipImageViewController: UIViewController {
     
     private var angle: CGFloat = 0
     
-    private var selectedRatio: ZLImageClipRatio {
-        didSet {
-            overlayView.isCircle = selectedRatio.isCircle
-            shadowView.isCircle = selectedRatio.isCircle
-        }
-    }
+    private var selectedRatio: XCropProportionEnum = .original
     
     private var thumbnailImage: UIImage?
     
@@ -216,25 +212,27 @@ class ZLClipImageViewController: UIViewController {
     var dismissAnimateImage: UIImage?
     
     /// 传回旋转角度，图片编辑区域的rect
-    var clipDoneBlock: ((CGFloat, CGRect, ZLImageClipRatio) -> Void)?
+    var clipDoneBlock: ((CGFloat, CGRect, XCropProportionEnum) -> Void)?
     
+    public var successClipBlock: ((UIImage) -> Void)?
+
     var cancelClipBlock: (() -> Void)?
     
-    override var prefersStatusBarHidden: Bool { true }
+    public override var prefersStatusBarHidden: Bool { true }
     
-    override var prefersHomeIndicatorAutoHidden: Bool { true }
+    public override var prefersHomeIndicatorAutoHidden: Bool { true }
     
-    override var supportedInterfaceOrientations: UIInterfaceOrientationMask { .portrait }
+    public override var supportedInterfaceOrientations: UIInterfaceOrientationMask { .portrait }
     
     deinit {
         zl_debugPrint("ZLClipImageViewController deinit")
         cleanTimer()
     }
     
-    init(image: UIImage, status: ZLClipStatus) {
+   public init(image: UIImage, status: ZLClipStatus) {
         originalImage = image
         let configuration = ZLPhotoConfiguration.default().editImageConfiguration
-        clipRatios = configuration.clipRatios
+//        clipRatios = configuration.clipRatios
         dimClippedAreaDuringAdjustments = configuration.dimClippedAreaDuringAdjustments
         editRect = status.editRect
         angle = status.angle
@@ -248,17 +246,17 @@ class ZLClipImageViewController: UIViewController {
         } else {
             editImage = image
         }
-        var firstEnter = false
-        if let ratio = status.ratio {
-            selectedRatio = ratio
-        } else {
-            firstEnter = true
-            selectedRatio = ZLPhotoConfiguration.default().editImageConfiguration.clipRatios.first!
-        }
+//        var firstEnter = false
+//        if let ratio = status.ratio {
+//            selectedRatio = ratio
+//        } else {
+//            firstEnter = true
+            selectedRatio = clipRatios.first!
+//        }
         super.init(nibName: nil, bundle: nil)
-        if firstEnter {
+//        if firstEnter {
             calculateClipRect()
-        }
+//        }
     }
     
     @available(*, unavailable)
@@ -266,14 +264,14 @@ class ZLClipImageViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func viewDidLoad() {
+    public override func viewDidLoad() {
         super.viewDidLoad()
         
         setupUI()
         generateThumbnailImage()
     }
     
-    override func viewDidAppear(_ animated: Bool) {
+    public override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
         viewDidAppearCount += 1
@@ -316,7 +314,7 @@ class ZLClipImageViewController: UIViewController {
         }
     }
     
-    override func viewDidLayoutSubviews() {
+    public override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         
         guard shouldLayout else { return }
@@ -340,7 +338,7 @@ class ZLClipImageViewController: UIViewController {
         
         let ratioColViewY = bottomToolView.frame.minY - ZLClipImageViewController.clipRatioItemSize.height - 5
         rotateBtn.frame = CGRect(x: 30, y: ratioColViewY + (ZLClipImageViewController.clipRatioItemSize.height - 25) / 2, width: 25, height: 25)
-        let ratioColViewX = rotateBtn.frame.maxX + 15
+        let ratioColViewX =  15.0
         clipRatioColView.frame = CGRect(x: ratioColViewX, y: ratioColViewY, width: view.bounds.width - ratioColViewX, height: 70)
         
         if clipRatios.count > 1, let index = clipRatios.firstIndex(where: { $0 == self.selectedRatio }) {
@@ -348,7 +346,7 @@ class ZLClipImageViewController: UIViewController {
         }
     }
     
-    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+    public override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to: size, with: coordinator)
         shouldLayout = true
         maxClipFrame = calculateMaxClipFrame()
@@ -408,7 +406,7 @@ class ZLClipImageViewController: UIViewController {
     }
     
     private func calculateClipRect() {
-        if selectedRatio.whRatio == 0 {
+        if selectedRatio == .original || selectedRatio == .custom {
             editRect = CGRect(origin: .zero, size: editImage.size)
         } else {
             let imageSize = editImage.size
@@ -427,10 +425,32 @@ class ZLClipImageViewController: UIViewController {
         }
     }
     
+    private func calculChangeScale()->CGRect{
+        let maxClipRect = maxClipFrame
+        let editSize = editRect.size
+
+//        containerView.frame = CGRect(origin: .zero, size: editImage.size)
+//        imageView.frame = containerView.bounds
+        
+        // editRect比例，计算editRect所占frame
+        let editScale = min(maxClipRect.width / editSize.width, maxClipRect.height / editSize.height)
+        let scaledSize = CGSize(width: floor(editSize.width * editScale), height: floor(editSize.height * editScale))
+        
+        var frame = CGRect.zero
+        frame.size = scaledSize
+        frame.origin.x = maxClipRect.minX + floor((maxClipRect.width - frame.width) / 2)
+        frame.origin.y = maxClipRect.minY + floor((maxClipRect.height - frame.height) / 2)
+        
+        return frame
+    }
+    
     private func layoutInitialImage() {
+//        let lastScale = mainScrollView.zoomScale
         mainScrollView.minimumZoomScale = 1
         mainScrollView.maximumZoomScale = 1
         mainScrollView.zoomScale = 1
+        
+        
         
         let editSize = editRect.size
         mainScrollView.contentSize = editSize
@@ -459,6 +479,7 @@ class ZLClipImageViewController: UIViewController {
         
         mainScrollView.minimumZoomScale = originalScale
         mainScrollView.maximumZoomScale = 10
+        
         // 设置当前zoom scale
         let zoomScale = clipRectZoomScale * originalScale
         mainScrollView.zoomScale = zoomScale
@@ -479,7 +500,7 @@ class ZLClipImageViewController: UIViewController {
         mainScrollView.contentOffset = CGPoint(x: -mainScrollView.contentInset.left + diffX, y: -mainScrollView.contentInset.top + diffY)
     }
     
-    private func changeClipBoxFrame(newFrame: CGRect) {
+    private func changeClipBoxFrame(newFrame: CGRect,animation:Bool = false) {
         guard clipBoxFrame != newFrame else {
             return
         }
@@ -510,9 +531,21 @@ class ZLClipImageViewController: UIViewController {
 //        frame.size.height = floor(max(self.minClipSize.height, min(frame.height, maxH)))
         
         clipBoxFrame = frame
-        shadowView.clearRect = frame
-        overlayView.frame = frame.insetBy(dx: -ZLClipOverlayView.cornerLineWidth, dy: -ZLClipOverlayView.cornerLineWidth)
-        
+        if(animation){
+            UIView.animate(withDuration: 0.2) {
+                self.shadowView.clearRect = frame
+                self.overlayView.frame = frame.insetBy(dx: -ZLClipOverlayView.cornerLineWidth, dy: -ZLClipOverlayView.cornerLineWidth)
+                
+                // 需要调用 setNeedsDisplay 或类似的方法来更新 shadowView 和 overlayView 的显示
+                self.shadowView.setNeedsDisplay()
+                self.overlayView.setNeedsDisplay()
+            }
+        }else{
+            shadowView.clearRect = frame
+            overlayView.frame = frame.insetBy(dx: -ZLClipOverlayView.cornerLineWidth, dy: -ZLClipOverlayView.cornerLineWidth)
+        }
+
+      
         mainScrollView.contentInset = UIEdgeInsets(top: frame.minY, left: frame.minX, bottom: mainScrollView.frame.maxY - frame.maxY, right: mainScrollView.frame.maxX - frame.maxX)
         
         let scale = max(frame.height / editImage.size.height, frame.width / editImage.size.width)
@@ -530,7 +563,8 @@ class ZLClipImageViewController: UIViewController {
         dismissAnimateFromRect = cancelClipAnimateFrame
         dismissAnimateImage = presentAnimateImage
         cancelClipBlock?()
-        dismiss(animated: animate, completion: nil)
+//        dismiss(animated: animate, completion: nil)
+        self.navigationController?.popViewController(animated: true)
     }
     
     @objc private func revertBtnClick() {
@@ -553,9 +587,14 @@ class ZLClipImageViewController: UIViewController {
                 self.clipDoneBlock?(self.angle, image.editRect, self.selectedRatio)
             }
         } else {
-            clipDoneBlock?(angle, image.editRect, selectedRatio)
-            dismiss(animated: animate, completion: nil)
+//            clipDoneBlock?(angle, image.editRect, selectedRatio)
+//            dismiss(animated: animate, completion: nil)
+            let image = originalImage.zl.clipImage(angle: angle, editRect: image.editRect, isCircle: false)
+            successClipBlock?(image)
+            self.navigationController?.popViewController(animated: true)
+
         }
+        
     }
     
     @objc private func rotateBtnClick() {
@@ -903,7 +942,7 @@ class ZLClipImageViewController: UIViewController {
     
     private func clipImage() -> (clipImage: UIImage, editRect: CGRect) {
         let frame = convertClipRectToEditImageRect()
-        let clipImage = editImage.zl.clipImage(angle: 0, editRect: frame, isCircle: selectedRatio.isCircle)
+        let clipImage = editImage.zl.clipImage(angle: 0, editRect: frame, isCircle: false)
         return (clipImage, frame)
     }
     
@@ -931,7 +970,7 @@ class ZLClipImageViewController: UIViewController {
 }
 
 extension ZLClipImageViewController: UIGestureRecognizerDelegate {
-    func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+    public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         guard gestureRecognizer == gridPanGes else {
             return true
         }
@@ -948,26 +987,29 @@ extension ZLClipImageViewController: UIGestureRecognizerDelegate {
 }
 
 extension ZLClipImageViewController: UICollectionViewDataSource, UICollectionViewDelegate {
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+    public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return clipRatios.count
     }
     
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+    public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ZLImageClipRatioCell.zl.identifier, for: indexPath) as! ZLImageClipRatioCell
         
         let ratio = clipRatios[indexPath.row]
-        cell.configureCell(image: thumbnailImage ?? editImage, ratio: ratio)
+        let selectIndex = clipRatios.firstIndex(of: selectedRatio) ?? 0
+        cell.configureCell(ratio: ratio,select: selectIndex == indexPath.row)
         
-        if ratio == selectedRatio {
-            cell.titleLabel.textColor = .zl.imageEditorToolTitleTintColor
-        } else {
-            cell.titleLabel.textColor = .zl.imageEditorToolTitleNormalColor
-        }
+//        if ratio == selectedRatio {
+//            cell.titleLabel.textColor = .zl.imageEditorToolTitleTintColor
+//            cell.image = .zl.getImage(ratio.toImageName().appending("_high"))
+//        } else {
+//            cell.titleLabel.textColor = .zl.imageEditorToolTitleNormalColor
+//            cell.image = .zl.getImage(ratio.toImageName().appending("_normal"))
+//        }
         
         return cell
     }
     
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+    public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let ratio = clipRatios[indexPath.row]
         guard ratio != selectedRatio else {
             return
@@ -976,20 +1018,32 @@ extension ZLClipImageViewController: UICollectionViewDataSource, UICollectionVie
         clipRatioColView.reloadData()
         clipRatioColView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
         calculateClipRect()
-        layoutInitialImage()
+
+        
+        let rect = calculChangeScale()
+
+        changeClipBoxFrame(newFrame: rect,animation: true)
+        
+//        layoutInitialImage()
     }
 }
 
 extension ZLClipImageViewController: UIScrollViewDelegate {
-    func viewForZooming(in scrollView: UIScrollView) -> UIView? {
+    public func viewForZooming(in scrollView: UIScrollView) -> UIView? {
         return containerView
     }
     
-    func scrollViewWillBeginZooming(_ scrollView: UIScrollView, with view: UIView?) {
+    
+    public func scrollViewWillBeginZooming(_ scrollView: UIScrollView, with view: UIView?) {
         startEditing()
     }
     
-    func scrollViewDidEndZooming(_ scrollView: UIScrollView, with view: UIView?, atScale scale: CGFloat) {
+//   public func scrollViewDidZoom(_ scrollView: UIScrollView) {
+//        // 打印每次缩放后的 zoomScale
+//        print("Current zoomScale: \(scrollView.zoomScale)")
+//    }
+
+    public func scrollViewDidEndZooming(_ scrollView: UIScrollView, with view: UIView?, atScale scale: CGFloat) {
         guard scrollView == mainScrollView else {
             return
         }
@@ -998,21 +1052,21 @@ extension ZLClipImageViewController: UIScrollViewDelegate {
         }
     }
     
-    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+    public func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
         guard scrollView == mainScrollView else {
             return
         }
         startEditing()
     }
     
-    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+    public func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         guard scrollView == mainScrollView else {
             return
         }
         startTimer()
     }
     
-    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+    public func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
         guard scrollView == mainScrollView else {
             return
         }
@@ -1023,7 +1077,7 @@ extension ZLClipImageViewController: UIScrollViewDelegate {
 }
 
 extension ZLClipImageViewController: UIViewControllerTransitioningDelegate {
-    func animationController(forDismissed dismissed: UIViewController) -> UIViewControllerAnimatedTransitioning? {
+    public func animationController(forDismissed dismissed: UIViewController) -> UIViewControllerAnimatedTransitioning? {
         return ZLClipImageDismissAnimatedTransition()
     }
 }
@@ -1032,7 +1086,7 @@ extension ZLClipImageViewController: UIViewControllerTransitioningDelegate {
 
 class ZLImageClipRatioCell: UICollectionViewCell {
     private lazy var imageView: UIImageView = {
-        let view = UIImageView(frame: CGRect(x: 8, y: 5, width: bounds.width - 16, height: bounds.width - 16))
+        let view = UIImageView(frame: CGRect(x: 6, y: 10, width: 36, height: 36))
         view.contentMode = .scaleAspectFill
         view.layer.cornerRadius = 3
         view.layer.masksToBounds = true
@@ -1041,7 +1095,7 @@ class ZLImageClipRatioCell: UICollectionViewCell {
     }()
     
     lazy var titleLabel: UILabel = {
-        let label = UILabel(frame: CGRect(x: 0, y: bounds.height - 15, width: bounds.width, height: 12))
+        let label = UILabel(frame: CGRect(x: 0, y: bounds.height - 20, width: bounds.width, height: 12))
         label.font = .zl.font(ofSize: 12)
         label.textColor = .white
         label.textAlignment = .center
@@ -1053,8 +1107,13 @@ class ZLImageClipRatioCell: UICollectionViewCell {
     
     var image: UIImage?
     
-    var ratio: ZLImageClipRatio!
+    var ratio: XCropProportionEnum!
     
+    var selectIndex:Int = 0{
+        didSet{
+            
+        }
+    }
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -1088,11 +1147,11 @@ class ZLImageClipRatioCell: UICollectionViewCell {
                 w = h * ratio.whRatio
             }
         }
-        if ratio.isCircle {
-            imageView.layer.cornerRadius = w / 2
-        } else {
+//        if ratio.isCircle {
+//            imageView.layer.cornerRadius = w / 2
+//        } else {
             imageView.layer.cornerRadius = 3
-        }
+//        }
         imageView.frame = CGRect(x: center.x - w / 2, y: center.y - h / 2, width: w, height: h)
     }
     
@@ -1101,12 +1160,23 @@ class ZLImageClipRatioCell: UICollectionViewCell {
         contentView.addSubview(titleLabel)
     }
     
-    func configureCell(image: UIImage, ratio: ZLImageClipRatio) {
-        imageView.image = image
-        titleLabel.text = ratio.title
-        self.image = image
+    func configureCell(ratio: XCropProportionEnum,select:Bool) {
+//        imageView.image = image
+        titleLabel.text = ratio.toName()
+//        self.image = .zl.getImage(ratio.toImageName())
         self.ratio = ratio
         
+        if select {
+            titleLabel.textColor = .zl.imageEditorToolTitleTintColor
+            let imageName = "\(ratio.toImageName()+"_high")"
+            image = .zl.getImage(imageName)
+        } else {
+            titleLabel.textColor = .zl.imageEditorToolTitleNormalColor
+            let imageName = "\(ratio.toImageName()+"_normal")"
+            image = .zl.getImage(imageName)
+        }
+            imageView.image = image
+
         setNeedsLayout()
     }
 }

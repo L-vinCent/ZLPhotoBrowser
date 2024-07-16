@@ -29,8 +29,14 @@ import UIKit
 public struct ZLClipStatus {
     var angle: CGFloat = 0
     var editRect: CGRect
-    var ratio: ZLImageClipRatio?
+    var ratio: XCropProportionEnum?
+    public init(angle: CGFloat = 0, editRect: CGRect, ratio: XCropProportionEnum? = nil) {
+        self.angle = angle
+        self.editRect = editRect
+        self.ratio = ratio
+    }
 }
+
 
 public struct ZLAdjustStatus {
     var brightness: Float = 0
@@ -429,7 +435,7 @@ open class ZLEditImageViewController: UIViewController {
                     stickers: [],
                     actions: []
                 )
-                completion?(image.zl.clipImage(angle: angle, editRect: editRect, isCircle: ratio.isCircle), model)
+                completion?(image.zl.clipImage(angle: angle, editRect: editRect, isCircle: false), model)
             }
             vc.cancelClipBlock = cancel
             vc.animate = animate
@@ -690,14 +696,14 @@ open class ZLEditImageViewController: UIViewController {
         containerView.frame = CGRect(x: max(0, (scrollViewSize.width - w) / 2), y: y, width: w, height: h)
         mainScrollView.contentSize = containerView.frame.size
 
-        if currentClipStatus.ratio?.isCircle == true {
-            let mask = CAShapeLayer()
-            let path = UIBezierPath(arcCenter: CGPoint(x: w / 2, y: h / 2), radius: w / 2, startAngle: 0, endAngle: .pi * 2, clockwise: true)
-            mask.path = path.cgPath
-            containerView.layer.mask = mask
-        } else {
-            containerView.layer.mask = nil
-        }
+//        if currentClipStatus.ratio?.isCircle == true {
+//            let mask = CAShapeLayer()
+//            let path = UIBezierPath(arcCenter: CGPoint(x: w / 2, y: h / 2), radius: w / 2, startAngle: 0, endAngle: .pi * 2, clockwise: true)
+//            mask.path = path.cgPath
+//            containerView.layer.mask = mask
+//        } else {
+//            containerView.layer.mask = nil
+//        }
         let scaleImageOrigin = CGPoint(x: -editRect.origin.x * ratio, y: -editRect.origin.y * ratio)
         let scaleImageSize = CGSize(width: imageSize.width * ratio, height: imageSize.height * ratio)
         imageView.frame = CGRect(origin: scaleImageOrigin, size: scaleImageSize)
@@ -943,7 +949,7 @@ open class ZLEditImageViewController: UIViewController {
             .clipImage(
                 angle: currentClipStatus.angle,
                 editRect: currentClipStatus.editRect,
-                isCircle: currentClipStatus.ratio?.isCircle ?? false
+                isCircle:  false
             )
         vc.modalPresentationStyle = .fullScreen
         
@@ -1119,7 +1125,7 @@ open class ZLEditImageViewController: UIViewController {
                 .clipImage(
                     angle: currentClipStatus.angle,
                     editRect: currentClipStatus.editRect,
-                    isCircle: currentClipStatus.ratio?.isCircle ?? false
+                    isCircle:  false
                 )
             editModel = ZLEditImageModel(
                 drawPaths: drawPaths,
@@ -1416,7 +1422,7 @@ open class ZLEditImageViewController: UIViewController {
         r.origin.y *= scale
         r.size.width *= scale
         r.size.height *= scale
-        let isCircle = currentClipStatus.ratio?.isCircle ?? false
+        let isCircle = false
         let bgImage = buildImage()
             .zl.clipImage(angle: currentClipStatus.angle, editRect: currentClipStatus.editRect, isCircle: isCircle)
             .zl.clipImage(angle: 0, editRect: r, isCircle: isCircle)
