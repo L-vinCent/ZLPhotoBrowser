@@ -93,6 +93,29 @@ public enum XCropProportionEnum: CaseIterable  {
        }
 }
 
+public enum XClipSegmentTap:Int,CaseIterable  {
+        case clip,rotate
+    func toName() -> String {
+        switch self {
+        case .clip:
+            return "裁剪"
+        case .rotate:
+            return "旋转"
+        }
+    }
+    
+//    func tag() -> Int {
+//        switch self {
+//        case .clip:
+//            return 1
+//        case .rotate:
+//            return 2
+//        }
+//    }
+    
+}
+
+
 public enum XCropRotateEnum: CaseIterable  {
     case cropLeft, cropRight,cropHor,cropVer
     
@@ -110,14 +133,27 @@ public enum XCropRotateEnum: CaseIterable  {
         case .cropLeft:
             return "向左90"
         case .cropRight:
-            return "自向右90"
+            return "向右90"
         case .cropHor:
             return "水平翻转"
         case .cropVer:
             return "垂直翻转"
         }
     }
-        
+    // 方法：将 XCropRotateEnum 映射到 UIImage.Orientation
+      func toImageOrientation() -> UIImage.Orientation {
+          switch self {
+          case .cropLeft:
+              return .left
+          case .cropRight:
+              return .right
+          case .cropHor:
+              return .upMirrored
+          case .cropVer:
+              return .downMirrored
+          }
+      }
+    
         func toImageName() -> String {
             switch self {
             case .cropLeft:
