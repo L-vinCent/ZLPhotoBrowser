@@ -128,10 +128,11 @@ public class XPhotoViewController:UIViewController{
         
     }
  
-    public convenience init(with maxSelect:Int = 9,hudStyle:ZLProgressHUD.Style = .custom) {
+    public convenience init(with maxSelect:Int = 9,hudStyle:ZLProgressHUD.Style = .custom,autoPop:Bool = true) {
         self.init()
         ZLPhotoUIConfiguration.default().hudStyle = hudStyle
 //        XSelectedModelsManager.shared.clearDatas()
+        ZLPhotoConfiguration.default().autoPopToVC = autoPop
         XSelectedModelsManager.customConfigure(maxSelect: maxSelect)
     }
     
@@ -435,9 +436,13 @@ extension XPhotoViewController{
             if(config.maxSelectCount == 1){
                 //不做dismiss操作，直接跳转
                 call()
-                self?.navigationController?.popViewController(animated: true)
+                if(config.autoPopToVC){
+                    self?.navigationController?.popViewController(animated: true)
+                }else{
+                    // 选择一张而且不做自动隐藏的情况下，跳转后要清除选中后的图片
+                    self?.dataManager.removeAll()
+                }
 //                PHPhotoLibrary.shared().unregisterChangeObserver(self)
-
                 return
             }
 

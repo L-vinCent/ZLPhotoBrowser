@@ -27,9 +27,9 @@
 import UIKit
 
 public struct ZLClipStatus {
-    var angle: CGFloat = 0
-    var editRect: CGRect
-    var ratio: XCropProportionEnum?
+    public var angle: CGFloat = 0
+    public var editRect: CGRect
+    public var ratio: XCropProportionEnum?
     public init(angle: CGFloat = 0, editRect: CGRect, ratio: XCropProportionEnum? = nil) {
         self.angle = angle
         self.editRect = editRect
@@ -233,7 +233,7 @@ open class ZLEditImageViewController: UIViewController {
     private var impactFeedback: UIImpactFeedbackGenerator?
     
     // 第一次进入界面时，布局后frame，裁剪dimiss动画使用
-    var originalFrame: CGRect = .zero
+    public var originalFrame: CGRect = .zero
     
     var imageSize: CGSize {
         if shouldSwapSize {
@@ -1700,7 +1700,7 @@ open class ZLEditImageViewController: UIViewController {
         return UIImage(cgImage: cgi, scale: editImage.scale, orientation: .up)
     }
     
-    func finishClipDismissAnimate() {
+    public func finishClipDismissAnimate() {
         mainScrollView.alpha = 1
         UIView.animate(withDuration: 0.1) {
             self.topShadowView.alpha = 1
@@ -2144,4 +2144,16 @@ extension ZLEditImageViewController: ZLEditorManagerDelegate {
         adjustCollectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
         adjustCollectionView.reloadData()
     }
+}
+
+extension ZLEditImageViewController:ImageDismissTransitionHandler {
+    public var originalImageFrame: CGRect {
+        // 返回相应的 frame
+        return originalFrame // 示例值，请根据实际情况修改
+    }
+    
+    public func finishClipDismissAnimation() {
+        finishClipDismissAnimate()
+    }
+    
 }

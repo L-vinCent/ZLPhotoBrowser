@@ -26,19 +26,50 @@
 
 import UIKit
 
+// 定义协议
+public protocol ImageDismissTransitionHandler: UIViewController {
+    var originalImageFrame: CGRect { get }
+    func finishClipDismissAnimation()
+}
+
+
 class ZLClipImageDismissAnimatedTransition: NSObject, UIViewControllerAnimatedTransitioning {
     func transitionDuration(using transitionContext: UIViewControllerContextTransitioning?) -> TimeInterval {
         return 0.25
     }
     
     func animateTransition(using transitionContext: UIViewControllerContextTransitioning) {
-        guard let fromVC = transitionContext.viewController(forKey: .from) as? ZLClipImageViewController, let toVC = transitionContext.viewController(forKey: .to) as? ZLEditImageViewController else {
+        
+        guard let fromVC = transitionContext.viewController(forKey: .from) as? ZLClipImageViewController else {
+            
+            transitionContext.completeTransition(!transitionContext.transitionWasCancelled)
+            return
+        }
+        // 检查 toViewController 是否是 UINavigationController
+        let toVC: ImageDismissTransitionHandler?
+        if let navController = transitionContext.viewController(forKey: .to) as? UINavigationController {
+            toVC = navController.topViewController as? ImageDismissTransitionHandler
+        } else {
+            toVC = transitionContext.viewController(forKey: .to) as? ImageDismissTransitionHandler
+        }
+        
+        
+        guard let destinationVC = toVC else {
+            
             transitionContext.completeTransition(!transitionContext.transitionWasCancelled)
             return
         }
         
         let containerView = transitionContext.containerView
-        containerView.addSubview(toVC.view)
+        
+        guard let toView = transitionContext.view(forKey: .to) else {
+            transitionContext.completeTransition(!transitionContext.transitionWasCancelled)
+            return
+        }
+        
+        fromVC.view.alpha = 0
+        containerView.addSubview(toView)
+        
         
         let imageView = UIImageView(frame: fromVC.dismissAnimateFromRect)
         imageView.contentMode = .scaleAspectFill
@@ -46,12 +77,17 @@ class ZLClipImageDismissAnimatedTransition: NSObject, UIViewControllerAnimatedTr
         imageView.image = fromVC.dismissAnimateImage
         containerView.addSubview(imageView)
         
-        UIView.animate(withDuration: 0.3, animations: {
-            imageView.frame = toVC.originalFrame
+        
+        
+        UIView.animate(withDuration: 0.25, animations: {
+            imageView.frame = destinationVC.originalImageFrame
+            
+            
         }) { _ in
-            toVC.finishClipDismissAnimate()
+            destinationVC.finishClipDismissAnimation()
             imageView.removeFromSuperview()
             transitionContext.completeTransition(!transitionContext.transitionWasCancelled)
         }
     }
 }
+

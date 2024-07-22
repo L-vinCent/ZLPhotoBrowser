@@ -44,6 +44,8 @@ public class ZLPhotoConfiguration: NSObject {
     }
     
     private var pri_maxSelectCount = 9
+    //选择一张图片后自动返回
+    public var autoPopToVC:Bool = true
     /// Anything superior than 1 will enable the multiple selection feature. Defaults to 9.
     public var maxSelectCount: Int {
         get {

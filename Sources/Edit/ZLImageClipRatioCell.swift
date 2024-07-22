@@ -56,24 +56,7 @@ class ZLImageClipRatioCell: UICollectionViewCell {
         
         let center = imageView.center
         var w: CGFloat = 36, h: CGFloat = 36
-        
-//        let imageMaxW = bounds.width - 10
-//        if ratio.whRatio == 0 {
-//            let maxSide = max(image.size.width, image.size.height)
-//            w = imageMaxW * image.size.width / maxSide
-//            h = imageMaxW * image.size.height / maxSide
-//        } else {
-//            if ratio.whRatio >= 1 {
-//                w = imageMaxW
-//                h = w / ratio.whRatio
-//            } else {
-//                h = imageMaxW
-//                w = h * ratio.whRatio
-//            }
-//        }
-//        if ratio.isCircle {
-//            imageView.layer.cornerRadius = w / 2
-//        } else {
+
             imageView.layer.cornerRadius = 3
 //        }
         imageView.frame = CGRect(x: center.x - w / 2, y: center.y - h / 2, width: w, height: h)

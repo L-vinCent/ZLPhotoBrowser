@@ -60,6 +60,8 @@ public class ZLClipImageViewController: UIViewController {
 
     private var editImage: UIImage
     
+//    public var hasTransitioning:Bool = false
+    
     /// 初次进入界面时候，裁剪范围
     private var editRect: CGRect
     
@@ -246,20 +248,23 @@ public class ZLClipImageViewController: UIViewController {
     
     var animate = true
     /// 用作进入裁剪界面首次动画frame
-    var presentAnimateFrame: CGRect?
+    public var presentAnimateFrame: CGRect?
     /// 用作进入裁剪界面首次动画和取消裁剪时动画的image
-    var presentAnimateImage: UIImage?
+    public var presentAnimateImage: UIImage?
     
-    var dismissAnimateFromRect: CGRect = .zero
+    public var dismissAnimateFromRect: CGRect = .zero
     
-    var dismissAnimateImage: UIImage?
+    public var dismissAnimateImage: UIImage?
     
     /// 传回旋转角度，图片编辑区域的rect
-    var clipDoneBlock: ((CGFloat, CGRect, XCropProportionEnum) -> Void)?
+    public var clipDoneBlock: ((CGFloat, CGRect, XCropProportionEnum) -> Void)?
+    
+    /// 传回旋转角度，图片编辑区域的rect
+    public var xClipDoneBlock: ((CGFloat, CGRect, XCropProportionEnum,UIImage? ) -> Void)?
     
     public var successClipBlock: ((UIImage) -> Void)?
 
-    var cancelClipBlock: (() -> Void)?
+    public var cancelClipBlock: (() -> Void)?
     
     public override var prefersStatusBarHidden: Bool { true }
     
@@ -293,17 +298,17 @@ public class ZLClipImageViewController: UIViewController {
         } else {
             editImage = image
         }
-//        var firstEnter = false
-//        if let ratio = status.ratio {
-//            selectedRatio = ratio
-//        } else {
-//            firstEnter = true
+        var firstEnter = false
+        if let ratio = status.ratio {
+            selectedRatio = ratio
+        } else {
+            firstEnter = true
             selectedRatio = clipRatios.first!
-//        }
+        }
         super.init(nibName: nil, bundle: nil)
-//        if firstEnter {
+        if firstEnter {
             calculateClipRect()
-//        }
+        }
     }
     
   
@@ -323,9 +328,14 @@ public class ZLClipImageViewController: UIViewController {
         super.viewDidAppear(animated)
         
         viewDidAppearCount += 1
-        if presentingViewController is ZLEditImageViewController {
+        if let navigationController = presentingViewController as? UINavigationController,
+           let presentingVC = navigationController.topViewController as? ImageDismissTransitionHandler {
+            transitioningDelegate = self
+        } else if let presentingVC = presentingViewController as? ImageDismissTransitionHandler {
             transitioningDelegate = self
         }
+
+
         
         guard viewDidAppearCount == 1 else {
             return
@@ -764,8 +774,8 @@ extension ZLClipImageViewController{
          dismissAnimateFromRect = cancelClipAnimateFrame
          dismissAnimateImage = presentAnimateImage
          cancelClipBlock?()
- //        dismiss(animated: animate, completion: nil)
-         self.navigationController?.popViewController(animated: true)
+         dismiss(animated: animate, completion: nil)
+
      }
      
      @objc private func revertBtnClick() {
@@ -788,12 +798,17 @@ extension ZLClipImageViewController{
                  self.clipDoneBlock?(self.angle, image.editRect, self.selectedRatio)
              }
          } else {
- //            clipDoneBlock?(angle, image.editRect, selectedRatio)
- //            dismiss(animated: animate, completion: nil)
+//             clipDoneBlock?(angle, image.editRect, selectedRatio)
+//             dismiss(animated: animate, completion: nil)
 
-             let image = mirrorImage.zl.clipImage(angle: angle, editRect: image.editRect, isCircle: false)
-             successClipBlock?(image)
-             self.navigationController?.popViewController(animated: true)
+             let result = mirrorImage.zl.clipImage(angle: angle, editRect: image.editRect, isCircle: false)
+//             successClipBlock?(image)
+             clipDoneBlock?(angle, image.editRect, selectedRatio)
+             xClipDoneBlock?(angle, image.editRect, selectedRatio,result)
+
+             dismiss(animated: animate, completion: nil)
+
+//             self.navigationController?.popViewController(animated: true)
 
          }
          
@@ -1225,11 +1240,53 @@ extension ZLClipImageViewController: UIScrollViewDelegate {
         }
     }
 }
+//
+//extension ZLClipImageViewController{
+//    //提供外部跳转到clip的动画
+//    public class func toClipVC(sender:UIViewController ,currentClipStatus:ZLClipStatus,currentEditImage:UIImage,rect:CGRect,beforePresent:(() -> Void)?,cancelClick: (() -> Void)?,doneClick:((CGFloat, CGRect, XCropProportionEnum) -> Void)?) {
+//        guard let sender = sender as? ImageDismissTransitionHandler else {
+//               print("Sender does not conform to ImageDismissTransitionHandler")
+//               return
+//           }
+//        let vc = ZLClipImageViewController(image: currentEditImage, status: currentClipStatus)
+//        vc.presentAnimateFrame = rect
+//        vc.hasTransitioning = true
+//        vc.presentAnimateImage = currentEditImage.zl
+//            .clipImage(
+//                angle: currentClipStatus.angle,
+//                editRect: currentClipStatus.editRect,
+//                isCircle:  false
+//            )
+//        vc.modalPresentationStyle = .fullScreen
+//        
+//        vc.clipDoneBlock = { angle, editRect, selectRatio in
+//            doneClick?(angle,editRect,selectRatio)
+////            guard let `self` = self else { return }
+//            
+////            self.clipImage(status: ZLClipStatus(angle: angle, editRect: editRect, ratio: selectRatio))
+////            self.editorManager.storeAction(.clip(oldStatus: self.preClipStatus, newStatus: self.currentClipStatus))
+//        }
+//        
+//        vc.cancelClipBlock = cancelClick
+//        
+//        sender.present(vc, animated: false) {
+////            self.mainScrollView.alpha = 0
+////            self.topShadowView.alpha = 0
+////            self.bottomShadowView.alpha = 0
+////            self.adjustSlider?.alpha = 0
+//            beforePresent?()
+//        }
+//
+//    }
+//
+//}
 //MARK: 控制器转场 UIViewControllerTransitioningDelegate
 
 extension ZLClipImageViewController: UIViewControllerTransitioningDelegate {
     public func animationController(forDismissed dismissed: UIViewController) -> UIViewControllerAnimatedTransitioning? {
-        return ZLClipImageDismissAnimatedTransition()
+            return ZLClipImageDismissAnimatedTransition()
     }
 }
+
+
 
