@@ -51,7 +51,7 @@ public class ZLClipImageViewController: UIViewController {
     private var viewDidAppearCount = 0
     
     private let originalImage: UIImage
-    private var mirrorImage: UIImage
+//    private var mirrorImage: UIImage
 
     private var clipRatios :[XCropProportionEnum] = XCropProportionEnum.allCases
     private var clipRotates :[XCropRotateEnum] = XCropRotateEnum.allCases
@@ -59,11 +59,67 @@ public class ZLClipImageViewController: UIViewController {
     private let dimClippedAreaDuringAdjustments: Bool
 
     private var editImage: UIImage
-    
+    //是否进行了翻转
+    var flipTuple: (horFlip: Bool, verFlip: Bool)
 //    public var hasTransitioning:Bool = false
     
     /// 初次进入界面时候，裁剪范围
     private var editRect: CGRect
+    
+  
+
+    private var shouldLayout = true
+    
+    private var panEdge: ZLClipImageViewController.ClipPanEdge = .none
+    
+    private var beginPanPoint: CGPoint = .zero
+    
+    private var clipBoxFrame: CGRect = .zero
+    
+    private var clipOriginFrame: CGRect = .zero
+    
+    private var isRotating = false
+    
+    private var angle: CGFloat = 0
+
+
+    private var selectedRatio: XCropProportionEnum = .original
+    
+    private var thumbnailImage: UIImage?
+    
+    private lazy var maxClipFrame = calculateMaxClipFrame()
+    
+    private var minClipSize = CGSize(width: 45, height: 45)
+    
+    private var resetTimer: Timer?
+    
+    var animate = true
+    /// 用作进入裁剪界面首次动画frame
+    public var presentAnimateFrame: CGRect?
+    /// 用作进入裁剪界面首次动画和取消裁剪时动画的image
+    public var presentAnimateImage: UIImage?
+    
+    public var dismissAnimateFromRect: CGRect = .zero
+    
+    public var dismissAnimateImage: UIImage?
+    
+    public var animateImageView: UIImageView?
+
+    /// 传回旋转角度，图片编辑区域的rect
+    public var clipDoneBlock: ((CGFloat, CGRect, XCropProportionEnum) -> Void)?
+    
+    /// 传回旋转角度，图片编辑区域的rect
+    public var xClipDoneBlock: ((CGFloat, CGRect,(Bool,Bool), XCropProportionEnum,UIImage?) -> Void)?
+    
+    public var successClipBlock: ((UIImage) -> Void)?
+
+    public var cancelClipBlock: (() -> Void)?
+    
+    public override var prefersStatusBarHidden: Bool { true }
+    
+    public override var prefersHomeIndicatorAutoHidden: Bool { true }
+    
+    public override var supportedInterfaceOrientations: UIInterfaceOrientationMask { .portrait }
     
     private lazy var mainScrollView: UIScrollView = {
         let view = UIScrollView()
@@ -220,59 +276,6 @@ public class ZLClipImageViewController: UIViewController {
         return control
     }()
     
-
-    private var shouldLayout = true
-    
-    private var panEdge: ZLClipImageViewController.ClipPanEdge = .none
-    
-    private var beginPanPoint: CGPoint = .zero
-    
-    private var clipBoxFrame: CGRect = .zero
-    
-    private var clipOriginFrame: CGRect = .zero
-    
-    private var isRotating = false
-    
-    private var angle: CGFloat = 0
-
-
-    private var selectedRatio: XCropProportionEnum = .original
-    
-    private var thumbnailImage: UIImage?
-    
-    private lazy var maxClipFrame = calculateMaxClipFrame()
-    
-    private var minClipSize = CGSize(width: 45, height: 45)
-    
-    private var resetTimer: Timer?
-    
-    var animate = true
-    /// 用作进入裁剪界面首次动画frame
-    public var presentAnimateFrame: CGRect?
-    /// 用作进入裁剪界面首次动画和取消裁剪时动画的image
-    public var presentAnimateImage: UIImage?
-    
-    public var dismissAnimateFromRect: CGRect = .zero
-    
-    public var dismissAnimateImage: UIImage?
-    
-    /// 传回旋转角度，图片编辑区域的rect
-    public var clipDoneBlock: ((CGFloat, CGRect, XCropProportionEnum) -> Void)?
-    
-    /// 传回旋转角度，图片编辑区域的rect
-    public var xClipDoneBlock: ((CGFloat, CGRect, XCropProportionEnum,UIImage? ) -> Void)?
-    
-    public var successClipBlock: ((UIImage) -> Void)?
-
-    public var cancelClipBlock: (() -> Void)?
-    
-    public override var prefersStatusBarHidden: Bool { true }
-    
-    public override var prefersHomeIndicatorAutoHidden: Bool { true }
-    
-    public override var supportedInterfaceOrientations: UIInterfaceOrientationMask { .portrait }
-    
-    
     //MARK: 生命周期函数
     deinit {
         zl_debugPrint("ZLClipImageViewController deinit")
@@ -281,7 +284,7 @@ public class ZLClipImageViewController: UIViewController {
     
    public init(image: UIImage, status: ZLClipStatus) {
        originalImage = image
-       mirrorImage = originalImage
+//       mirrorImage = originalImage
        currentClipSegment = .clip
         let configuration = ZLPhotoConfiguration.default().editImageConfiguration
 //        clipRatios = configuration.clipRatios
@@ -305,7 +308,10 @@ public class ZLClipImageViewController: UIViewController {
             firstEnter = true
             selectedRatio = clipRatios.first!
         }
+        self.flipTuple = (false,false)
+
         super.init(nibName: nil, bundle: nil)
+       
         if firstEnter {
             calculateClipRect()
         }
@@ -342,25 +348,32 @@ public class ZLClipImageViewController: UIViewController {
         }
         
         if let presentAnimateFrame = presentAnimateFrame,
-           let presentAnimateImage = presentAnimateImage {
-            let animateImageView = UIImageView(image: presentAnimateImage)
-            animateImageView.contentMode = .scaleAspectFill
-            animateImageView.clipsToBounds = true
-            animateImageView.frame = presentAnimateFrame
-            view.addSubview(animateImageView)
+           let presentAnimateImage = presentAnimateImage,
+           let animateImageView = animateImageView {
+//            let animateImageView = UIImageView(image: presentAnimateImage)
+//            animateImageView.contentMode = .scaleAspectFill
+//            animateImageView.clipsToBounds = true
+//            animateImageView.frame = presentAnimateFrame
+//            view.addSubview(animateImageView)
             
             cancelClipAnimateFrame = clipBoxFrame
+//            self.shadowView.isHiddenBlurView = true
             UIView.animate(withDuration: 0.25, animations: {
                 animateImageView.frame = self.clipBoxFrame
                 self.bottomToolView.alpha = 1
                 self.rotateBtn.alpha = 1
             }) { _ in
+                self.shadowView.alpha = 1
+
                 UIView.animate(withDuration: 0.1, animations: {
                     self.mainScrollView.alpha = 1
                     self.overlayView.alpha = 1
-                    self.shadowView.alpha = 1
+//                    self.shadowView.alpha = 1
+                    
                 }) { _ in
                     animateImageView.removeFromSuperview()
+//                    self.shadowView.isHiddenBlurView = false
+
                 }
             }
         } else {
@@ -447,6 +460,16 @@ public class ZLClipImageViewController: UIViewController {
         shadowView.alpha = 0
 //        bottomToolView.alpha = 0
 //        rotateBtn.alpha = 0
+        if let presentAnimateFrame = presentAnimateFrame,
+           let presentAnimateImage = presentAnimateImage {
+            let animateImageView = UIImageView(image: presentAnimateImage)
+            animateImageView.contentMode = .scaleAspectFill
+            animateImageView.clipsToBounds = true
+            animateImageView.frame = presentAnimateFrame
+            self.animateImageView = animateImageView
+            view.addSubview(self.animateImageView!)
+        }
+        
     }
     
     private func generateThumbnailImage() {
@@ -793,6 +816,7 @@ extension ZLClipImageViewController{
          let image = clipImage()
          dismissAnimateFromRect = clipBoxFrame
          dismissAnimateImage = image.clipImage
+         let temp = image.clipImage
          if presentingViewController is ZLCustomCamera {
              dismiss(animated: animate) {
                  self.clipDoneBlock?(self.angle, image.editRect, self.selectedRatio)
@@ -801,10 +825,11 @@ extension ZLClipImageViewController{
 //             clipDoneBlock?(angle, image.editRect, selectedRatio)
 //             dismiss(animated: animate, completion: nil)
 
-             let result = mirrorImage.zl.clipImage(angle: angle, editRect: image.editRect, isCircle: false)
+             //这里不需要再次做旋转操作
+             let result = editImage.zl.clipImage(angle: 0, editRect: image.editRect, isCircle: false)
 //             successClipBlock?(image)
              clipDoneBlock?(angle, image.editRect, selectedRatio)
-             xClipDoneBlock?(angle, image.editRect, selectedRatio,result)
+             xClipDoneBlock?(angle, image.editRect,flipTuple, selectedRatio,result)
 
              dismiss(animated: animate, completion: nil)
 
@@ -822,6 +847,17 @@ extension ZLClipImageViewController{
     private func rotateClick(type:XCropRotateEnum){
         rotateBtnClick(type:type)
     }
+    //翻转
+    private func toggleFlip(for type: XCropRotateEnum) {
+        switch type {
+        case .cropHor:
+            flipTuple.horFlip.toggle()
+        case .cropVer:
+            flipTuple.verFlip.toggle()
+        default:
+            break
+        }
+    }
     //保证修改锚点后 frame 保持不变 , 锚点更新，lastLocation要更新
     private func updateAnchorPoint(_ anchorPoint: CGPoint, for view: UIView) {
         let oldFrame = view.frame
@@ -838,18 +874,18 @@ extension ZLClipImageViewController{
           if (type == .cropHor || type == .cropVer){
               let orientation = type.toImageOrientation()
               editImage = editImage.zl.rotate(orientation: orientation)
-              mirrorImage = mirrorImage.zl.rotate(orientation: orientation)
+//              mirrorImage = mirrorImage.zl.rotate(orientation: orientation)
               imageView.image = editImage
-              
+              toggleFlip(for: type)
               return
           }
         
           
-         angle -= 90
-         if angle == -360 {
-             angle = 0
-         }
-         
+//         angle -= 90
+//         if angle == -360 {
+//             angle = 0
+//         }
+          rotateImageAngle(direction: type)
          isRotating = true
          
          let animateImageView = UIImageView(image: editImage)
@@ -931,6 +967,28 @@ extension ZLClipImageViewController{
         
      }
      
+   private  func rotateImageAngle(direction: XCropRotateEnum) {
+        switch direction {
+        case .cropRight:
+            angle += 90
+            if angle == 360 {
+                angle = 0
+            }
+        case .cropLeft:
+            angle -= 90
+            if angle == -360 {
+                angle = 0
+            }
+        default:
+            break
+        }
+       //角度统一为向左的度数计算
+       if(angle > 0){
+           angle -= 360
+       }
+       print("Current angle: \(angle)")
+
+    }
      @objc private func gridGesPanAction(_ pan: UIPanGestureRecognizer) {
          let point = pan.location(in: view)
          if pan.state == .began {

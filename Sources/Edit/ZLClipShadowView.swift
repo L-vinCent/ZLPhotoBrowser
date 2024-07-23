@@ -44,7 +44,7 @@ class ZLClipShadowView: UIView {
          setupBlurEffectView()
      }
     
-    private var blurEffectView: ZLClipBlurView?
+    var blurEffectView: ZLClipBlurView?
     
    
     private func setupBlurEffectView() {

@@ -141,7 +141,7 @@ public enum XCropRotateEnum: CaseIterable  {
         }
     }
     // 方法：将 XCropRotateEnum 映射到 UIImage.Orientation
-      func toImageOrientation() -> UIImage.Orientation {
+     public func toImageOrientation() -> UIImage.Orientation {
           switch self {
           case .cropLeft:
               return .left
