@@ -109,7 +109,7 @@ public class ZLClipImageViewController: UIViewController {
     public var clipDoneBlock: ((CGFloat, CGRect, XCropProportionEnum) -> Void)?
     
     /// 传回旋转角度，图片编辑区域的rect
-    public var xClipDoneBlock: ((ZLClipStatus) -> Void)?
+    public var xClipDoneBlock: ((ZLClipStatus,UIImage) -> Void)?
     
     public var successClipBlock: ((UIImage) -> Void)?
 
@@ -281,50 +281,41 @@ public class ZLClipImageViewController: UIViewController {
         zl_debugPrint("ZLClipImageViewController deinit")
         cleanTimer()
     }
-    
-   public init(image: UIImage, status: ZLClipStatus) {
+    //isRecordStatus wei ture,会根据status 状态记录上一次图片的裁剪状态和位置, false 默认不记录，进来就是新状态
+    public init(image: UIImage, status: ZLClipStatus? = nil) {
        originalImage = image
 //       mirrorImage = originalImage
        currentClipSegment = .clip
         let configuration = ZLPhotoConfiguration.default().editImageConfiguration
 //        clipRatios = configuration.clipRatios
         dimClippedAreaDuringAdjustments = configuration.dimClippedAreaDuringAdjustments
-        editRect = status.editRect
-        angle = status.angle
-        flipTuple = status.flipTuple
-       //更新ratios
        
        
-        let angle = ((Int(angle) % 360) - 360) % 360
-        if angle == -90 {
-            editImage = image.zl.rotate(orientation: .left)
-        } else if angle == -180 {
-            editImage = image.zl.rotate(orientation: .down)
-        } else if angle == -270 {
-            editImage = image.zl.rotate(orientation: .right)
-        } else {
+        if let status = status{
+            editRect = status.editRect
+            angle = status.angle
+            flipTuple = status.flipTuple
+            //更新ratios
+            let angle = ((Int(angle) % 360) - 360) % 360
+            if angle == -90 {
+                editImage = image.zl.rotate(orientation: .left)
+            } else if angle == -180 {
+                editImage = image.zl.rotate(orientation: .down)
+            } else if angle == -270 {
+                editImage = image.zl.rotate(orientation: .right)
+            } else {
+                editImage = image
+            }
+            selectedRatio = status.ratio
+        }else{
             editImage = image
+            editRect =  CGRectMake(0, 0, editImage.zl.width, editImage.zl.height)
+            selectedRatio = .custom(size: image.size)
         }
-        var firstEnter = false
-//        if let ratio = status.ratio {
-            selectedRatio = status.ratio 
-//        } else {
-//            firstEnter = true
-//            selectedRatio = clipRatios.first!
-//        }
-       
-//       if status.flipTuple.horFlip{
-//           editImage = editImage.zl.rotate(orientation:.upMirrored)
-//       }
-//       if status.flipTuple.verFlip{
-//           editImage = editImage.zl.rotate(orientation:.downMirrored)
-//       }
+        
 
         super.init(nibName: nil, bundle: nil)
-       
-//        if firstEnter {
-//            calculateClipRect()
-//        }
+
        updateRatioSize(for: editRect.size)
 
     }
@@ -838,12 +829,12 @@ extension ZLClipImageViewController{
 //             dismiss(animated: animate, completion: nil)
 
              //这里不需要再次做旋转操作
-//             let result = editImage.zl.clipImage(angle: 0, editRect: image.editRect, isCircle: false)
+             let result = editImage.zl.clipImage(angle: 0, editRect: image.editRect, isCircle: false)
 //             successClipBlock?(image)
              selectedRatio = selectedRatio.updateSize(to: image.editRect.size)
              let clipStatus = ZLClipStatus(angle: self.angle, editRect: image.editRect,ratio: selectedRatio,flip: flipTuple)
 //             clipDoneBlock?(angle, image.editRect, selectedRatio)
-             xClipDoneBlock?(clipStatus)
+             xClipDoneBlock?(clipStatus,result)
 
              dismiss(animated: animate, completion: nil)
 
