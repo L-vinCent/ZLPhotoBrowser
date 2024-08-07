@@ -406,7 +406,7 @@ public extension ZLPhotoBrowserWrapper where Base: UIImage {
         return ciImage
     }
     
-    func clipImage(angle: CGFloat, editRect: CGRect, isCircle: Bool) -> UIImage {
+    func clipImage(angle: CGFloat, editRect: CGRect, isCircle: Bool,flip:FlipTuple = (false,false)) -> UIImage {
         let a = ((Int(angle) % 360) - 360) % 360
         var newImage: UIImage = base
         if a == -90 {
@@ -435,8 +435,21 @@ public extension ZLPhotoBrowserWrapper where Base: UIImage {
         guard let cgi = temp.cgImage else { return temp }
         
         let clipImage = UIImage(cgImage: cgi, scale: newImage.scale, orientation: .up)
-        return clipImage
+        let result = flipImage(image: clipImage, flip: flip)
+        return result
     }
+    
+    private func flipImage(image:UIImage,flip:FlipTuple) -> UIImage{
+        var result = image
+        if flip.horFlip{
+            result = image.zl.rotate(orientation: .upMirrored)
+        }
+        if flip.verFlip{
+            result = image.zl.rotate(orientation: .downMirrored)
+        }
+        return result
+    }
+
     
     func blurImage(level: CGFloat) -> UIImage? {
         guard let ciImage = toCIImage() else {

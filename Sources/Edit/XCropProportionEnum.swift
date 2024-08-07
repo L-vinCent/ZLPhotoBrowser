@@ -7,12 +7,13 @@
 
 import Foundation
 public enum XCropProportionEnum: CaseIterable  {
-    case original, custom, wh1x1,wh3x4,wh4x3, wh9x16, wh16x9,wh2x3,wh3x2
-    
+    case original(size: CGSize)
+    case custom(size: CGSize)
+    case wh1x1, wh3x4, wh4x3, wh9x16, wh16x9, wh2x3, wh3x2
     public static var allCases: [XCropProportionEnum] {
         return [
-            .original,
-            .custom,
+            .original(size:.zero),
+            .custom(size: .zero),
             .wh1x1,
             .wh3x4,
             .wh4x3,
@@ -71,9 +72,9 @@ public enum XCropProportionEnum: CaseIterable  {
     
     var whRatio: CGFloat {
            switch self {
-           case .original:
-               return 0 // 可以根据需求返回原始比例，也可以用其他表示方式
-           case .custom:
+           case .original(let size):
+               return size.width / size.height // 可以根据需求返回原始比例，也可以用其他表示方式
+           case .custom(let size):
                return 0 // 自定义比例，这里返回0，具体比例需要用户输入
            case .wh1x1:
                return 1.0 / 1.0
@@ -91,6 +92,24 @@ public enum XCropProportionEnum: CaseIterable  {
                return 3.0 / 2.0
            }
        }
+    
+    func updateSize(to newSize: CGSize) -> XCropProportionEnum {
+          switch self {
+          case .original:
+              return .original(size: newSize)
+          case .custom:
+              return .custom(size: newSize)
+          default:
+              return self
+          }
+      }
+    
+}
+
+extension XCropProportionEnum: Equatable {
+    public static func == (lhs: XCropProportionEnum, rhs: XCropProportionEnum) -> Bool {
+        return lhs.toName() == rhs.toName()
+    }
 }
 
 public enum XClipSegmentTap:Int,CaseIterable  {

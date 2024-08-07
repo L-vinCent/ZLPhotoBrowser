@@ -26,14 +26,20 @@
 
 import UIKit
 
-public struct ZLClipStatus {
+public typealias FlipTuple = (horFlip: Bool, verFlip: Bool)
+
+public class ZLClipStatus {
     public var angle: CGFloat = 0
     public var editRect: CGRect
-    public var ratio: XCropProportionEnum?
-    public init(angle: CGFloat = 0, editRect: CGRect, ratio: XCropProportionEnum? = nil) {
+    public var ratio: XCropProportionEnum
+    //是否进行了镜像
+    public var flipTuple:FlipTuple
+
+    public init(angle: CGFloat = 0, editRect: CGRect, ratio: XCropProportionEnum = .wh1x1,flip:FlipTuple = (false,false)) {
         self.angle = angle
         self.editRect = editRect
         self.ratio = ratio
+        self.flipTuple = flip
     }
 }
 

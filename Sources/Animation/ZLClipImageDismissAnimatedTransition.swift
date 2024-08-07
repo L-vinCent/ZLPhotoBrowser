@@ -34,8 +34,10 @@ public protocol ImageDismissTransitionHandler: UIViewController {
 
 
 class ZLClipImageDismissAnimatedTransition: NSObject, UIViewControllerAnimatedTransitioning {
+    let clipTransTime:TimeInterval = 0.25
+
     func transitionDuration(using transitionContext: UIViewControllerContextTransitioning?) -> TimeInterval {
-        return 0.25
+        return clipTransTime
     }
     
     func animateTransition(using transitionContext: UIViewControllerContextTransitioning) {
@@ -79,7 +81,7 @@ class ZLClipImageDismissAnimatedTransition: NSObject, UIViewControllerAnimatedTr
         
         
         
-        UIView.animate(withDuration: 0.25, animations: {
+        UIView.animate(withDuration: clipTransTime, animations: {
             imageView.frame = destinationVC.originalImageFrame
             
             

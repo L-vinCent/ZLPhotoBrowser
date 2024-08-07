@@ -59,8 +59,8 @@ public class ZLClipImageViewController: UIViewController {
     private let dimClippedAreaDuringAdjustments: Bool
 
     private var editImage: UIImage
-    //是否进行了翻转
-    var flipTuple: (horFlip: Bool, verFlip: Bool)
+//    //是否进行了翻转
+    var flipTuple:FlipTuple = (false,false)
 //    public var hasTransitioning:Bool = false
     
     /// 初次进入界面时候，裁剪范围
@@ -83,7 +83,7 @@ public class ZLClipImageViewController: UIViewController {
     private var angle: CGFloat = 0
 
 
-    private var selectedRatio: XCropProportionEnum = .original
+    private var selectedRatio: XCropProportionEnum = .custom(size: .zero)
     
     private var thumbnailImage: UIImage?
     
@@ -109,7 +109,7 @@ public class ZLClipImageViewController: UIViewController {
     public var clipDoneBlock: ((CGFloat, CGRect, XCropProportionEnum) -> Void)?
     
     /// 传回旋转角度，图片编辑区域的rect
-    public var xClipDoneBlock: ((CGFloat, CGRect,(Bool,Bool), XCropProportionEnum,UIImage?) -> Void)?
+    public var xClipDoneBlock: ((ZLClipStatus) -> Void)?
     
     public var successClipBlock: ((UIImage) -> Void)?
 
@@ -291,6 +291,10 @@ public class ZLClipImageViewController: UIViewController {
         dimClippedAreaDuringAdjustments = configuration.dimClippedAreaDuringAdjustments
         editRect = status.editRect
         angle = status.angle
+        flipTuple = status.flipTuple
+       //更新ratios
+       
+       
         let angle = ((Int(angle) % 360) - 360) % 360
         if angle == -90 {
             editImage = image.zl.rotate(orientation: .left)
@@ -302,19 +306,27 @@ public class ZLClipImageViewController: UIViewController {
             editImage = image
         }
         var firstEnter = false
-        if let ratio = status.ratio {
-            selectedRatio = ratio
-        } else {
-            firstEnter = true
-            selectedRatio = clipRatios.first!
-        }
-        self.flipTuple = (false,false)
+//        if let ratio = status.ratio {
+            selectedRatio = status.ratio 
+//        } else {
+//            firstEnter = true
+//            selectedRatio = clipRatios.first!
+//        }
+       
+//       if status.flipTuple.horFlip{
+//           editImage = editImage.zl.rotate(orientation:.upMirrored)
+//       }
+//       if status.flipTuple.verFlip{
+//           editImage = editImage.zl.rotate(orientation:.downMirrored)
+//       }
 
         super.init(nibName: nil, bundle: nil)
        
-        if firstEnter {
-            calculateClipRect()
-        }
+//        if firstEnter {
+//            calculateClipRect()
+//        }
+       updateRatioSize(for: editRect.size)
+
     }
     
   
@@ -826,10 +838,12 @@ extension ZLClipImageViewController{
 //             dismiss(animated: animate, completion: nil)
 
              //这里不需要再次做旋转操作
-             let result = editImage.zl.clipImage(angle: 0, editRect: image.editRect, isCircle: false)
+//             let result = editImage.zl.clipImage(angle: 0, editRect: image.editRect, isCircle: false)
 //             successClipBlock?(image)
-             clipDoneBlock?(angle, image.editRect, selectedRatio)
-             xClipDoneBlock?(angle, image.editRect,flipTuple, selectedRatio,result)
+             selectedRatio = selectedRatio.updateSize(to: image.editRect.size)
+             let clipStatus = ZLClipStatus(angle: self.angle, editRect: image.editRect,ratio: selectedRatio,flip: flipTuple)
+//             clipDoneBlock?(angle, image.editRect, selectedRatio)
+             xClipDoneBlock?(clipStatus)
 
              dismiss(animated: animate, completion: nil)
 
@@ -1012,6 +1026,22 @@ extension ZLClipImageViewController{
 //MARK: Frame 计算
 extension ZLClipImageViewController{
     
+    //更新枚举值
+    func updateRatioSize(for size: CGSize) {
+//        var newSize:CGSize = .zero
+//        switch type {
+//        case .custom(let size),.original(let size):
+//            newSize = size
+//        default:
+//            break
+//        }
+
+        for (index, ratio) in clipRatios.enumerated() {
+            clipRatios[index] = ratio.updateSize(to: size)
+        }
+
+    }
+    
     /// 计算最大裁剪范围
     private func calculateMaxClipFrame() -> CGRect {
         var insets = deviceSafeAreaInsets()
@@ -1025,23 +1055,34 @@ extension ZLClipImageViewController{
     }
     
     private func calculateClipRect() {
-        if selectedRatio == .original || selectedRatio == .custom {
-            editRect = CGRect(origin: .zero, size: editImage.size)
-        } else {
-            let imageSize = editImage.size
-            let imageWHRatio = imageSize.width / imageSize.height
-            
-            var w: CGFloat = 0, h: CGFloat = 0
-            if selectedRatio.whRatio >= imageWHRatio {
-                w = imageSize.width
-                h = w / selectedRatio.whRatio
-            } else {
-                h = imageSize.height
-                w = h * selectedRatio.whRatio
-            }
-            
-            editRect = CGRect(x: (imageSize.width - w) / 2, y: (imageSize.height - h) / 2, width: w, height: h)
+        var imageSize:CGSize
+        switch selectedRatio{
+        case .original(let size):
+//            editRect = CGRect(origin: .zero, size: editImage.)
+            imageSize = size
+        case .custom(let size):
+            editRect.size = size
+            return
+        default:
+            imageSize = editImage.size
         }
+        
+        let imageWHRatio = imageSize.width / imageSize.height
+        var w: CGFloat = 0, h: CGFloat = 0
+        if selectedRatio.whRatio >= imageWHRatio {
+            w = imageSize.width
+            h = w / selectedRatio.whRatio
+        } else {
+            h = imageSize.height
+            w = h * selectedRatio.whRatio
+        }
+        editRect = CGRect(x: (imageSize.width - w) / 2, y: (imageSize.height - h) / 2, width: w, height: h)
+        
+//        if selectedRatio == .original || selectedRatio == .custom {
+//            editRect = CGRect(origin: .zero, size: editImage.size)
+//        } else {
+//           
+//        }
     }
     
     private func calculChangeScale()->CGRect{
@@ -1233,6 +1274,7 @@ extension ZLClipImageViewController: UICollectionViewDataSource, UICollectionVie
         
         if (collectionView == clipRatioColView){
             let ratio = clipRatios[indexPath.row]
+            print("asdasdasd\(ratio)")
             guard ratio != selectedRatio else {
                 return
             }
