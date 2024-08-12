@@ -21,6 +21,8 @@ public class XPhotoViewController:UIViewController{
 //    public var whenDeinitNeedClearSharedData:Bool = true
     //跳转的承接控制器
     private weak var sender: UIViewController?
+    //预览页是否显示自定义选择按钮
+    public var x_PreviewShowButton:Bool = false
     private var dataManager:XSelectedModelsManager = XSelectedModelsManager()
     private var arrSelectedModels: [ZLPhotoModel] {
         return dataManager.arrSelectedModels
@@ -308,6 +310,17 @@ extension XPhotoViewController{
             //刷新所有contentView
             self?.reloadAllContentTargetItems(model: model)
             
+        }
+        view.largeBlock = {[weak self] index in
+            guard let self = self else {return}
+            let vc = ZLPhotoPreviewController(photos:datas, index: index,showBottomViewAndSelectBtn: false)
+            vc.previewShowButton = self.x_PreviewShowButton
+            vc.beautyEditBlock = {model in
+                self.dataManager.add(model)
+                self.requestSelectPhoto()
+            }
+            self.show(vc, sender: nil)
+
         }
         //设置viewController的frame
         let X = scrollView.zl.width * CGFloat(index)

@@ -506,6 +506,8 @@ public class ZLPhotoUIConfiguration: NSObject {
     //自定义的按钮背景色 - 开始拼图
     public var x_CustomThemeBlack: UIColor = .zl.rgba(0, 0, 0, 1.0)
     
+    
+
 }
 
 

@@ -57,6 +57,9 @@ class ZLPhotoPreviewController: UIViewController {
         return view
     }()
     
+    //预览页是否显示自定义选择按钮
+    public var previewShowButton:Bool = false
+
     private let showBottomViewAndSelectBtn: Bool
     
     private var indexBeforOrientationChanged: Int
@@ -134,6 +137,18 @@ class ZLPhotoPreviewController: UIViewController {
         return btn
     }()
     
+    private lazy var startBeautyBtn: UIButton = {
+        let btn = createBtn("开始编辑", #selector(beautyBtnClick))
+        btn.titleLabel?.lineBreakMode = .byCharWrapping
+        btn.titleLabel?.numberOfLines = 0
+        btn.contentHorizontalAlignment = .center
+        btn.backgroundColor = .zl.rgba(55, 66, 250)
+        btn.layer.cornerRadius = 5
+        btn.layer.masksToBounds = true
+        return btn
+    }()
+
+    
     private lazy var originalBtn: UIButton = {
         let btn = createBtn(localLanguageTextValue(.originalPhoto), #selector(originalPhotoClick))
         btn.titleLabel?.lineBreakMode = .byCharWrapping
@@ -186,6 +201,10 @@ class ZLPhotoPreviewController: UIViewController {
     /// 界面消失时，通知上个界面刷新
     var backBlock: (() -> Void)?
     
+    //美颜 去编辑
+    var beautyEditBlock: ((ZLPhotoModel) -> Void)?
+
+
     override var prefersStatusBarHidden: Bool {
         !ZLPhotoUIConfiguration.default().showStatusBarInPreviewInterface
     }
@@ -355,6 +374,13 @@ class ZLPhotoPreviewController: UIViewController {
             height: originalLabel.font.lineHeight
         )
         
+        startBeautyBtn.frame = CGRect(
+            x: (view.frame.width/2) - 80,
+            y: view.frame.height - insets.bottom - bottomViewH - 40,
+            width: 160,
+            height: 42
+        )
+        
         let doneBtnW = (doneBtn.currentTitle ?? "")
             .zl.boundingRect(
                 font: ZLLayout.bottomToolTitleFont,
@@ -409,11 +435,12 @@ class ZLPhotoPreviewController: UIViewController {
         bottomView.addSubview(editBtn)
         
         originalBtn.isHidden = !(config.allowSelectOriginal && config.allowSelectImage)
+        startBeautyBtn.isHidden = !previewShowButton
         originalBtn.isSelected = (navigationController as? ZLImageNavController)?.isSelectedOriginal ?? false
         bottomView.addSubview(originalBtn)
         bottomView.addSubview(originalLabel)
         bottomView.addSubview(doneBtn)
-        
+        view.addSubview(startBeautyBtn)
         view.bringSubviewToFront(navView)
     }
     
@@ -610,6 +637,17 @@ class ZLPhotoPreviewController: UIViewController {
         if vc == nil {
             navigationController?.dismiss(animated: true, completion: nil)
         }
+    }
+    
+    @objc private func beautyBtnClick() {
+        
+        let currentModel = arrDataSources[currentIndex]
+//        downloadAssetIfNeed(model: currentModel, sender: self) { [weak self] in
+//            currentModel.isSelected = true
+//            config.didSelectAsset?(currentModel.asset)
+//        }
+        beautyEditBlock?(currentModel)
+        
     }
     
     @objc private func selectBtnClick() {

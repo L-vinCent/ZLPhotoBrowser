@@ -18,7 +18,9 @@ class XThumbNailCollectionView:UIView{
         return dataManager.arrSelectedModels
     }
 
-
+    /// 预览跳转
+    var largeBlock: ((Int) -> Void)?
+    
     var selectImageBlock: ((ZLPhotoModel) -> Void)?
     var showAddPhotoCell:Bool = false
     var showCameraCell:Bool = false
@@ -162,10 +164,12 @@ extension XThumbNailCollectionView: UICollectionViewDataSource, UICollectionView
 //        }
 
         
+        
         cell.largeBlock = {[weak self] in
-            guard let self = self,let sender = self.zl.findParentViewController() else {return}
-            let vc = ZLPhotoPreviewController(photos:self.arrDataSources, index: indexPath.row,showBottomViewAndSelectBtn: false)
-            sender.show(vc, sender: nil)
+            self?.largeBlock?(indexPath.row)
+//            guard let self = self,let sender = self.zl.findParentViewController() else {return}
+//            let vc = ZLPhotoPreviewController(photos:self.arrDataSources, index: indexPath.row,showBottomViewAndSelectBtn: false)
+//            sender.show(vc, sender: nil)
         }
         
         let chooseed = arrSelectedModels.containsModel(withIdent: model.ident)
