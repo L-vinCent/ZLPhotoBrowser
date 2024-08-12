@@ -30,7 +30,7 @@ import Photos
 @objcMembers
 public class ZLPhotoManager: NSObject {
     /// Save image to album.
-    public class func saveImageToAlbum(image: UIImage,name:String? = "证件照", completion: ((Bool, PHAsset?) -> Void)?) {
+    public class func saveImageToAlbum(image: UIImage,name:String? = nil, completion: ((Bool, PHAsset?) -> Void)?) {
         let status = PHPhotoLibrary.authorizationStatus()
         
         if status == .denied || status == .restricted {
@@ -60,15 +60,28 @@ public class ZLPhotoManager: NSObject {
                 placeholderAsset = newAssetRequest.placeholderForCreatedAsset
             }, completionHandler: completionHandler)
         } else {
-            PHPhotoLibrary.shared().performChanges({
-                let newAssetRequest = PHAssetChangeRequest.creationRequestForAsset(from: image)
-                placeholderAsset = newAssetRequest.placeholderForCreatedAsset
-            }, completionHandler: completionHandler)
+            if let data = image.jpegData(compressionQuality: 1.0) {
+                PHPhotoLibrary.shared().performChanges({
+                    let newAssetRequest = PHAssetCreationRequest.forAsset()
+                    let options = PHAssetResourceCreationOptions()
+                    options.originalFilename = name
+                    newAssetRequest.addResource(with: .photo, data: data, options: options)
+                    placeholderAsset = newAssetRequest.placeholderForCreatedAsset
+                }, completionHandler: completionHandler)
+            }else{
+                PHPhotoLibrary.shared().performChanges({
+                    let newAssetRequest = PHAssetChangeRequest.creationRequestForAsset(from: image)
+                    placeholderAsset = newAssetRequest.placeholderForCreatedAsset
+                }, completionHandler: completionHandler)
+            }
         }
+        
+        
+        
     }
     /// Save data to album.
 
-    public class func saveImageToAlbum(data: Data,name:String? = "证件照" ,completion: ((Bool, PHAsset?) -> Void)?) {
+    public class func saveImageToAlbum(data: Data,name:String? = nil ,completion: ((Bool, PHAsset?) -> Void)?) {
         let status = PHPhotoLibrary.authorizationStatus()
         
         if status == .denied || status == .restricted {
