@@ -184,31 +184,62 @@ public class XPhotoViewController:UIViewController{
 
 //提供给外部的调用方法
 extension XPhotoViewController{
-     //外部调用的跳转
     public func show(sender: UIViewController) {
         self.sender = sender
+        checkPhotoLibraryAuthorization {
+            sender.navigationController?.pushViewController(self, animated: true)
+        }
+    }
+    
+    // 检查权限的方法
+     func checkPhotoLibraryAuthorization(completion: @escaping () -> Void) {
         let status = PHPhotoLibrary.authorizationStatus()
-        if status == .restricted || status == .denied {
+
+        switch status {
+        case .restricted, .denied:
             showNoAuthorityAlert()
-        } else if status == .notDetermined {
-            PHPhotoLibrary.requestAuthorization { status in
+        case .notDetermined:
+            PHPhotoLibrary.requestAuthorization { newStatus in
                 ZLMainAsync {
-                    if status == .denied {
+                    if newStatus == .authorized {
+                        completion()
+                    } else {
                         self.showNoAuthorityAlert()
-                    } else if status == .authorized {
-                        sender.navigationController?.pushViewController(self, animated: true)
                     }
                 }
             }
-            
-        } else {
-            sender.navigationController?.pushViewController(self, animated: true)
+        case .authorized:
+            completion()
+        default:
+            break
         }
-        
-//        if #available(iOS 14.0, *), PHPhotoLibrary.authorizationStatus(for: .readWrite) == .limited {
-//            PHPhotoLibrary.shared().register(self)
-//        }
     }
+    
+//     //外部调用的跳转
+//    public func show(sender: UIViewController) {
+//        self.sender = sender
+//        let status = PHPhotoLibrary.authorizationStatus()
+//        if status == .restricted || status == .denied {
+//            showNoAuthorityAlert()
+//        } else if status == .notDetermined {
+//            PHPhotoLibrary.requestAuthorization { status in
+//                ZLMainAsync {
+//                    if status == .denied {
+//                        self.showNoAuthorityAlert()
+//                    } else if status == .authorized {
+//                        sender.navigationController?.pushViewController(self, animated: true)
+//                    }
+//                }
+//            }
+//            
+//        } else {
+//            sender.navigationController?.pushViewController(self, animated: true)
+//        }
+//        
+////        if #available(iOS 14.0, *), PHPhotoLibrary.authorizationStatus(for: .readWrite) == .limited {
+////            PHPhotoLibrary.shared().register(self)
+////        }
+//    }
 
     private func showNoAuthorityAlert() {
         let action = ZLCustomAlertAction(title: localLanguageTextValue(.ok), style: .default) { _ in
