@@ -192,7 +192,7 @@ extension XPhotoViewController{
     }
     
     // 检查权限的方法
-     func checkPhotoLibraryAuthorization(completion: @escaping () -> Void) {
+    public func checkPhotoLibraryAuthorization(completion: @escaping () -> Void) {
         let status = PHPhotoLibrary.authorizationStatus()
 
         switch status {
