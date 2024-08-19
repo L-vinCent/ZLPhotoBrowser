@@ -9,18 +9,22 @@ import Foundation
 public enum XCropProportionEnum: CaseIterable  {
     case original(size: CGSize)
     case custom(size: CGSize)
-    case wh1x1, wh3x4, wh4x3, wh9x16, wh16x9, wh2x3, wh3x2
+    case wh1x1, wh3x4, wh4x3, wh9x16, wh16x9, wh2x3, wh3x2, wh4x5, wh5x4, wh5x7, wh7x5
     public static var allCases: [XCropProportionEnum] {
         return [
-            .original(size:.zero),
             .custom(size: .zero),
+            .original(size:.zero),
             .wh1x1,
+            .wh2x3,
+            .wh3x2,
             .wh3x4,
             .wh4x3,
+            .wh4x5,
+            .wh5x4,
+            .wh5x7,
+            .wh7x5,
             .wh9x16,
             .wh16x9,
-            .wh2x3,
-            .wh3x2
         ]
     }
     
@@ -29,9 +33,9 @@ public enum XCropProportionEnum: CaseIterable  {
            case .original:
                return "原比例"
            case .custom:
-               return "自定义"
+               return "自由"
            case .wh1x1:
-               return "正方形"
+               return "1:1"
            case .wh3x4:
                return "3:4"
            case .wh4x3:
@@ -44,6 +48,14 @@ public enum XCropProportionEnum: CaseIterable  {
                return "2:3"
            case .wh3x2:
                return "3:2"
+           case .wh4x5:
+               return "4:5"
+           case .wh5x4:
+               return "5:4"
+           case .wh5x7:
+               return "5:7"
+           case .wh7x5:
+               return "7:5"
            }
        }
 
@@ -67,7 +79,16 @@ public enum XCropProportionEnum: CaseIterable  {
                return "wh2x3"
            case .wh3x2:
                return "wh3x2"
+           case .wh5x4:
+               return "wh5x4"
+           case .wh4x5:
+               return "wh4x5"
+           case .wh5x7:
+               return "wh5x7"
+           case .wh7x5:
+               return "wh7x5"
            }
+           
        }
     
     var whRatio: CGFloat {
@@ -90,6 +111,14 @@ public enum XCropProportionEnum: CaseIterable  {
                return 2.0 / 3.0
            case .wh3x2:
                return 3.0 / 2.0
+           case .wh4x5:
+               return 4.0 / 5.0
+           case .wh5x4:
+               return 5.0 / 4.0
+           case .wh5x7:
+               return 5.0 / 7.0
+           case .wh7x5:
+               return 7.0 / 5.0
            }
        }
     
