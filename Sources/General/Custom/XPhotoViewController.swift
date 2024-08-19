@@ -242,8 +242,14 @@ extension XPhotoViewController{
 //    }
 
     private func showNoAuthorityAlert() {
-        let action = ZLCustomAlertAction(title: localLanguageTextValue(.ok), style: .default) { _ in
+        let action = ZLCustomAlertAction(title: localLanguageTextValue(.gotoSettings), style: .default) { _ in
             ZLPhotoConfiguration.default().noAuthorityCallback?(.library)
+            guard let url = URL(string: UIApplication.openSettingsURLString) else {
+                return
+            }
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url, options: [:], completionHandler: nil)
+            }
         }
         showAlertController(title: nil, message: String(format: localLanguageTextValue(.noPhotoLibratyAuthority), getAppName()), style: .alert, actions: [action], sender: sender)
     }
