@@ -1001,6 +1001,7 @@ extension ZLClipImageViewController{
              beginPanPoint = point
              clipOriginFrame = clipBoxFrame
              panEdge = calculatePanEdge(at: point)
+             overlayView.setShowInnerGridLines(true)
          } else if pan.state == .changed {
              guard panEdge != .none else {
                  return
@@ -1009,6 +1010,8 @@ extension ZLClipImageViewController{
          } else if pan.state == .cancelled || pan.state == .ended {
              panEdge = .none
              startTimer()
+             overlayView.setShowInnerGridLines(false)
+
          }
      }
     

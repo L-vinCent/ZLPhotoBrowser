@@ -165,6 +165,8 @@ class ZLClipOverlayView: UIView {
     
     private var horLines: [UIView] = []
     
+    private var showInnerGridLines: Bool = false
+
     var isCircle = false {
         didSet {
             guard oldValue != isCircle else {
@@ -279,6 +281,12 @@ class ZLClipOverlayView: UIView {
 //            x += (self.bounds.width + 1) / 3
 //        }
     }
+    // 新增方法，用于控制是否显示内部的九宫格线
+     func setShowInnerGridLines(_ show: Bool) {
+         showInnerGridLines = show
+         setNeedsDisplay()
+     }
+    
     
     override func draw(_ rect: CGRect) {
         let context = UIGraphicsGetCurrentContext()
@@ -287,23 +295,29 @@ class ZLClipOverlayView: UIView {
         context?.setLineWidth(1)
         context?.beginPath()
         
-        let circleDiff: CGFloat = (3 - 2 * sqrt(2)) * (rect.width - 2 * ZLClipOverlayView.cornerLineWidth) / 6
-        
+//        if(showInnerGridLines){
+            let circleDiff: CGFloat = (3 - 2 * sqrt(2)) * (rect.width - 2 * ZLClipOverlayView.cornerLineWidth) / 6
+            
         var dw: CGFloat = 3
-        for i in 0..<4 {
+        var dh: CGFloat = 3
+        let steps = showInnerGridLines ? 4 : 2
+
+        for i in 0..<steps {
+            
             let isInnerLine = isCircle && 1...2 ~= i
+            
             context?.move(to: CGPoint(x: rect.origin.x + dw, y: ZLClipOverlayView.cornerLineWidth + (isInnerLine ? circleDiff : 0)))
             context?.addLine(to: CGPoint(x: rect.origin.x + dw, y: rect.height - ZLClipOverlayView.cornerLineWidth - (isInnerLine ? circleDiff : 0)))
-            dw += (rect.size.width - 6) / 3
-        }
-
-        var dh: CGFloat = 3
-        for i in 0..<4 {
-            let isInnerLine = isCircle && 1...2 ~= i
+            
             context?.move(to: CGPoint(x: ZLClipOverlayView.cornerLineWidth + (isInnerLine ? circleDiff : 0), y: rect.origin.y + dh))
             context?.addLine(to: CGPoint(x: rect.width - ZLClipOverlayView.cornerLineWidth - (isInnerLine ? circleDiff : 0), y: rect.origin.y + dh))
-            dh += (rect.size.height - 6) / 3
+            
+            let count = CGFloat(steps - 1)
+            dw += (rect.size.width - 6) / count
+            dh += (rect.size.height - 6) / count
         }
+
+       
 
         context?.strokePath()
 
