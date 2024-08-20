@@ -44,6 +44,17 @@ public class ZLProgressHUD: UIView {
         return label
     }()
     
+    // 蒙层
+     private lazy var overlayView: UIView = {
+         let view = UIView(frame: UIScreen.main.bounds)
+         view.backgroundColor = UIColor.black.withAlphaComponent(0.1)
+         view.isHidden = true
+         return view
+     }()
+    
+    // 控制是否显示蒙层
+//      public var shouldShowOverlay: Bool = true
+    
     private var timer: Timer?
     
     public var timeoutBlock: (() -> Void)?
@@ -65,6 +76,8 @@ public class ZLProgressHUD: UIView {
     }
     
     private func setupUI() {
+        addSubview(overlayView)
+
         let view = UIView(frame: CGRect(x: 0, y: 0, width: 135, height: 135))
         view.layer.masksToBounds = true
         view.layer.cornerRadius = 12
@@ -101,13 +114,27 @@ public class ZLProgressHUD: UIView {
     
     public func show(
         toast: ZLProgressHUD.Toast = .loading,
+        shouldShowOverlay:Bool = true,
         in view: UIView? = UIApplication.shared.keyWindow,
         timeout: TimeInterval = 100
     ) {
         ZLMainAsync {
             self.titleLabel.text = toast.value
-            self.startAnimation()
+            
             view?.addSubview(self)
+            if shouldShowOverlay {
+                self.overlayView.isHidden = false
+            }
+            
+            switch toast{
+            case .loading:
+                self.startAnimation()
+//            case .custome:
+//                self.loadingView.isHidden = true
+            default:
+                break
+            }
+            
         }
         
         if timeout > 0 {
@@ -122,6 +149,7 @@ public class ZLProgressHUD: UIView {
         ZLMainAsync {
             self.loadingView.layer.removeAllAnimations()
             self.removeFromSuperview()
+            self.overlayView.isHidden = true // 隐藏蒙层
         }
     }
     
@@ -146,6 +174,17 @@ public extension ZLProgressHUD {
         hud.show(toast: toast, in: view, timeout: timeout)
         return hud
     }
+    
+    class func showMagicToast(
+        message:String,
+        shouldShowOverlay:Bool = false,
+        in view: UIView? = UIApplication.shared.keyWindow,
+        timeout: TimeInterval = 1.5
+    ) -> ZLProgressHUD {
+        let hud = ZLProgressHUD(style: .magicToast)
+        hud.show(toast:.custome(message),shouldShowOverlay: shouldShowOverlay, in: view, timeout: timeout)
+        return hud
+    }
 }
 
 public extension ZLProgressHUD {
@@ -157,6 +196,7 @@ public extension ZLProgressHUD {
         case darkBlur
         case custom // 证件照
         case magic //魔术手
+        case magicToast
 
         var bgColor: UIColor {
             switch self {
@@ -168,6 +208,8 @@ public extension ZLProgressHUD {
                 return UIColor.white.withAlphaComponent(0.8)
             case .darkBlur:
                 return UIColor.darkGray.withAlphaComponent(0.8)
+            case .magicToast:
+                return UIColor.black.withAlphaComponent(0.9)
             case .custom ,.magic:
                 return UIColor.clear
 
@@ -185,6 +227,8 @@ public extension ZLProgressHUD {
                 return .zl.getImage("x_icon_hud_loading")
             case .magic:
                 return .zl.getImage("x_icon_hud_loading_magic")
+            case .magicToast:
+                return .zl.getImage("x_icon_hud_loading_magic")
             }
             
         }
@@ -195,7 +239,7 @@ public extension ZLProgressHUD {
                 return .black
             case .dark, .darkBlur:
                 return .white
-            case .custom ,.magic:
+            case .custom ,.magic,.magicToast:
                 return .white
             }
         
@@ -209,6 +253,8 @@ public extension ZLProgressHUD {
                 return .extraLight
             case .darkBlur:
                 return .dark
+            case .magicToast:
+                return nil
             case .custom ,.magic:
                 return nil
             }

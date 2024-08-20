@@ -353,7 +353,8 @@ extension XPhotoViewController{
             let vc = ZLPhotoPreviewController(photos:datas, index: index,showBottomViewAndSelectBtn: false)
             vc.previewShowButton = self.x_PreviewShowButton
             vc.beautyEditBlock = {model in
-                self.dataManager.add(model)
+//                self.dataManager.add(model)
+                self.addPhotoModel(model)
                 self.requestSelectPhoto()
             }
             self.show(vc, sender: nil)
@@ -459,7 +460,7 @@ extension XPhotoViewController{
         let config = ZLPhotoConfiguration.default()
         var isOriginal = true
         
-        let hud = ZLProgressHUD.show(toast: .processing, timeout: ZLPhotoUIConfiguration.default().timeout)
+        let hud = ZLProgressHUD.show(toast: .loading, timeout: ZLPhotoUIConfiguration.default().timeout)
         var timeout = false
         hud.timeoutBlock = { [weak self] in
             timeout = true
@@ -490,7 +491,7 @@ extension XPhotoViewController{
                     self?.navigationController?.popViewController(animated: true)
                 }else{
                     // 选择一张而且不做自动隐藏的情况下，跳转后要清除选中后的图片
-                    self?.dataManager.removeAll()
+                    self?.removeAllModel()
                 }
 //                PHPhotoLibrary.shared().unregisterChangeObserver(self)
                 return
