@@ -122,6 +122,38 @@ public enum XCropProportionEnum: CaseIterable  {
            }
        }
     
+   public var UMClickName: String {
+        switch self {
+        case .original:
+            return "origin" // 可以根据需求返回原始比例，也可以用其他表示方式
+        case .custom:
+            return "free" // 自定义比例，这里返回0，具体比例需要用户输入
+        case .wh1x1:
+            return "1_1"
+        case .wh3x4:
+            return "3_4"
+        case .wh4x3:
+            return "4_3"
+        case .wh9x16:
+            return "9_16"
+        case .wh16x9:
+            return "16_9"
+        case .wh2x3:
+            return "2_3"
+        case .wh3x2:
+            return "3_2"
+        case .wh4x5:
+            return "4_5"
+        case .wh5x4:
+            return "5_4"
+        case .wh5x7:
+            return "5_7"
+        case .wh7x5:
+            return "7_5"
+        }
+    }
+
+    
     func updateSize(to newSize: CGSize) -> XCropProportionEnum {
           switch self {
           case .original:
@@ -214,6 +246,19 @@ public enum XCropRotateEnum: CaseIterable  {
                 return "crop_ver"
             }
         }
-        
     
+  
+    public var UMClickName:String {
+        switch self {
+        case .cropLeft:
+            return "left90"
+        case .cropRight:
+            return "right90"
+        case .cropHor:
+            return "horizontal"
+        case .cropVer:
+            return "vertical"
+        }
+    }
+
 }
