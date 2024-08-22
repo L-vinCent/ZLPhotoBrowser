@@ -39,6 +39,7 @@ extension ZLClipImageViewController {
         case bottomRight
     }
 }
+public typealias UMRotateTuple = (horFlip: Bool, verFlip: Bool,right90:Bool,left90:Bool)
 
 public class ZLClipImageViewController: UIViewController {
     private static let bottomToolViewH: CGFloat = 90
@@ -109,12 +110,14 @@ public class ZLClipImageViewController: UIViewController {
     public var clipDoneBlock: ((CGFloat, CGRect, XCropProportionEnum) -> Void)?
     
     /// 传回旋转角度，图片编辑区域的rect
-    public var xClipDoneBlock: ((ZLClipStatus,UIImage) -> Void)?
+    public var xClipDoneBlock: ((ZLClipStatus,UIImage,UMRotateTuple) -> Void)?
     
     public var successClipBlock: ((UIImage) -> Void)?
 
     public var cancelClipBlock: (() -> Void)?
     
+    private var UClickRotate: UMRotateTuple = UMRotateTuple(false,false,false,false)
+
     public override var prefersStatusBarHidden: Bool { true }
     
     public override var prefersHomeIndicatorAutoHidden: Bool { true }
@@ -834,7 +837,7 @@ extension ZLClipImageViewController{
              selectedRatio = selectedRatio.updateSize(to: image.editRect.size)
              let clipStatus = ZLClipStatus(angle: self.angle, editRect: image.editRect,ratio: selectedRatio,flip: flipTuple)
 //             clipDoneBlock?(angle, image.editRect, selectedRatio)
-             xClipDoneBlock?(clipStatus,result)
+             xClipDoneBlock?(clipStatus,result,UClickRotate)
 
              dismiss(animated: animate, completion: nil)
 
@@ -874,7 +877,14 @@ extension ZLClipImageViewController{
          guard !isRotating else {
              return
          }
+          
           let orientation = type.toImageOrientation()
+          if (type == .cropHor){
+              UClickRotate.horFlip = true
+          }
+          if (type == .cropVer){
+              UClickRotate.verFlip = true
+          }
 
           if (type == .cropHor || type == .cropVer){
               let orientation = type.toImageOrientation()
@@ -979,11 +989,13 @@ extension ZLClipImageViewController{
             if angle == 360 {
                 angle = 0
             }
+            UClickRotate.right90 = true
         case .cropLeft:
             angle -= 90
             if angle == -360 {
                 angle = 0
             }
+            UClickRotate.left90 = true
         default:
             break
         }
