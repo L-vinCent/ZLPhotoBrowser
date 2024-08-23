@@ -259,8 +259,6 @@ extension XThumbNailCollectionView: UICollectionViewDataSource, UICollectionView
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let cell = collectionView.cellForItem(at: indexPath)
-        
-              
         guard let cell = cell as? ZLThumbnailPhotoCell else {
             return
         }

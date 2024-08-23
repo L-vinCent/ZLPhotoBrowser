@@ -171,7 +171,7 @@ public extension ZLProgressHUD {
         timeout: TimeInterval = 100
     ) -> ZLProgressHUD {
         let hud = ZLProgressHUD(style: ZLPhotoUIConfiguration.default().hudStyle)
-        hud.show(toast: toast, in: view, timeout: timeout)
+        hud.show(toast: toast,shouldShowOverlay: true, in: view, timeout: timeout)
         return hud
     }
     

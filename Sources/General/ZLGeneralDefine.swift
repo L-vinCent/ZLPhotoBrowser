@@ -160,11 +160,15 @@ func canAddModel(_ model: ZLPhotoModel, currentSelectCount: Int, sender: UIViewC
     }
     
     if(model.asset.pixelWidth > config.maxSelectLongSize || model.asset.pixelHeight > config.maxSelectLongSize){
-        let message = "图片较大，请换张图片再试~"
-//        let hud = ZLProgressHUD.show(toast: .custome(message),timeout: 2.0)
-        ZLProgressHUD.showMagicToast(message: message)
+  
         
-        
+        if let block = ZLPhotoUIConfiguration.default().xCustomToastBlock{
+            block()
+        }else{
+            let message = "图片较大，请换张图片再试~"
+    //        let hud = ZLProgressHUD.show(toast: .custome(message),timeout: 2.0)
+            ZLProgressHUD.showMagicToast(message: message)
+        }
         return false
     }
     

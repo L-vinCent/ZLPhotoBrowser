@@ -52,7 +52,7 @@ public class ZLPhotoUIConfiguration: NSObject {
     }
     
     // MARK: Framework style.
-    
+   
     /// Photo sorting method, the preview interface is not affected by this parameter. Defaults to true.
     public var sortAscending = true
     
@@ -505,8 +505,11 @@ public class ZLPhotoUIConfiguration: NSObject {
     public var x_CustomSelectedBtnbgColor: UIColor = .zl.rgba(55, 66, 250, 1.0)
     //自定义的按钮背景色 - 开始拼图
     public var x_CustomThemeBlack: UIColor = .zl.rgba(0, 0, 0, 1.0)
-    
-    
+    //是否使用外部的HUD
+    public var xCustomHudShowBlock:((Bool)->Void)?
+
+    //是否使用外部的toast
+    public var xCustomToastBlock:(()->Void)?
 
 }
 

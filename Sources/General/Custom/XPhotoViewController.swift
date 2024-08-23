@@ -460,17 +460,24 @@ extension XPhotoViewController{
         let config = ZLPhotoConfiguration.default()
         var isOriginal = true
         
-        let hud = ZLProgressHUD.show(toast: .loading, timeout: ZLPhotoUIConfiguration.default().timeout)
-        var timeout = false
-        hud.timeoutBlock = { [weak self] in
-            timeout = true
-            showAlertView(localLanguageTextValue(.timeout), self)
-            self?.fetchImageQueue.cancelAllOperations()
+        var hud:ZLProgressHUD?
+        if let block = ZLPhotoUIConfiguration.default().xCustomHudShowBlock{
+            block(true)
+        }else{
+            hud = ZLProgressHUD.show(toast: .loading, timeout: ZLPhotoUIConfiguration.default().timeout)
+            var timeout = false
+            hud?.timeoutBlock = { [weak self] in
+                timeout = true
+                showAlertView(localLanguageTextValue(.timeout), self)
+                self?.fetchImageQueue.cancelAllOperations()
+            }
         }
-        
+       
         let callback = { [weak self] (sucModels: [ZLResultModel], errorAssets: [PHAsset], errorIndexs: [Int]) in
-            hud.hide()
-            
+            hud?.hide()
+            if let block = ZLPhotoUIConfiguration.default().xCustomHudShowBlock{
+                block(false)
+            }
             func call() {
                 self?.DoneImageBlock?(sucModels)
                 if !errorAssets.isEmpty {
@@ -481,6 +488,8 @@ extension XPhotoViewController{
             if(config.maxSelectCount > 1){
                 //不做dismiss操作，直接跳转
                 call()
+                
+
                 return
             }
             
@@ -508,7 +517,7 @@ extension XPhotoViewController{
         for (i, m) in arrSelectedModels.enumerated() {
             
             let operation = ZLFetchImageOperation(model: m, isOriginal: isOriginal) { image, asset in
-                guard !timeout else { return }
+//                guard !timeout else { return }
                 
                 sucCount += 1
                 
