@@ -316,7 +316,15 @@ public class ZLPhotoManager: NSObject {
     
     @discardableResult
     public class func fetchOriginalImage(for asset: PHAsset, progress: ((CGFloat, Error?, UnsafeMutablePointer<ObjCBool>, [AnyHashable: Any]?) -> Void)? = nil, completion: @escaping (UIImage?, Bool) -> Void) -> PHImageRequestID {
-        return fetchImage(for: asset, size: PHImageManagerMaximumSize, resizeMode: .fast, progress: progress, completion: completion)
+        
+        var size = PHImageManagerMaximumSize
+        let originalSize = CGSize(width: asset.pixelWidth, height: asset.pixelHeight)
+        let maxLength: CGFloat = CGFloat(ZLPhotoUIConfiguration.default().xMaxOriginalLongSize)
+        if originalSize.width > maxLength || originalSize.height > maxLength {
+            let aspectRatio = min(maxLength / originalSize.width, maxLength / originalSize.height)
+            size = CGSize(width: originalSize.width * aspectRatio, height: originalSize.height * aspectRatio)
+        }
+        return fetchImage(for: asset, size: size, resizeMode: .fast, progress: progress, completion: completion)
     }
     
     /// Fetch asset data.

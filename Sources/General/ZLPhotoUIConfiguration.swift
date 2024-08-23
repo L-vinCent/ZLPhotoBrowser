@@ -510,7 +510,9 @@ public class ZLPhotoUIConfiguration: NSObject {
 
     //是否使用外部的toast
     public var xCustomToastBlock:(()->Void)?
-
+    
+    //是否是拼图
+    public var xMaxOriginalLongSize = 4096
 }
 
 
@@ -546,4 +548,9 @@ enum ZLCustomLanguageDeploy {
 @objc public enum ZLAdjustSliderType: Int {
     case vertical
     case horizontal
+}
+
+@objc public enum XPhotoStyle: Int {
+    case puzzle // 拼图
+    case beauty  // 美颜
 }
