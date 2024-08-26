@@ -1216,7 +1216,7 @@ extension ZLPhotoPreviewSheet: UIImagePickerControllerDelegate, UINavigationCont
 
 extension ZLPhotoPreviewSheet: PHPhotoLibraryChangeObserver {
     public func photoLibraryDidChange(_ changeInstance: PHChange) {
-        PHPhotoLibrary.shared().unregisterChangeObserver(self)
+        
         ZLMainAsync {
             self.loadPhotos()
         }

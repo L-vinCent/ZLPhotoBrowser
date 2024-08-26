@@ -833,7 +833,7 @@ extension ZLClipImageViewController{
 
              //这里不需要再次做旋转操作
              let result = editImage.zl.clipImage(angle: 0, editRect: image.editRect, isCircle: false)
-//             successClipBlock?(image)
+
              selectedRatio = selectedRatio.updateSize(to: image.editRect.size)
              let clipStatus = ZLClipStatus(angle: self.angle, editRect: image.editRect,ratio: selectedRatio,flip: flipTuple)
 //             clipDoneBlock?(angle, image.editRect, selectedRatio)

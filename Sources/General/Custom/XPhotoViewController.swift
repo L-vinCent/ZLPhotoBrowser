@@ -142,7 +142,8 @@ public class XPhotoViewController:UIViewController{
         super.viewDidLoad()
         configUI()
         loadContent()
-        
+        // 注册相册变化观察者
+        PHPhotoLibrary.shared().register(self)
     }
     
     private func configUI(){
@@ -174,6 +175,7 @@ public class XPhotoViewController:UIViewController{
     
     deinit {
         print("XTempVC deinit")
+        PHPhotoLibrary.shared().unregisterChangeObserver(self)
 
 //        if(whenDeinitNeedClearSharedData){
 //            XSelectedModelsManager.shared.clearDatas()
@@ -268,14 +270,13 @@ extension XPhotoViewController {
     }
 }
 
-//extension XPhotoViewController: PHPhotoLibraryChangeObserver {
-//    public func photoLibraryDidChange(_ changeInstance: PHChange) {
-//        PHPhotoLibrary.shared().unregisterChangeObserver(self)
-//        ZLMainAsync {
-//            self.loadContent()
-//        }
-//    }
-//}
+extension XPhotoViewController: PHPhotoLibraryChangeObserver {
+    public func photoLibraryDidChange(_ changeInstance: PHChange) {
+        ZLMainAsync {
+            self.loadContent()
+        }
+    }
+}
 
 
 
