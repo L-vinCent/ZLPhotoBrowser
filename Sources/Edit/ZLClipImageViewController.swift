@@ -702,6 +702,8 @@ extension ZLClipImageViewController{
     @objc private func endEditing() {
         overlayView.isEditing = false
         moveClipContentToCenter()
+        overlayView.setShowInnerGridLines(false)
+
 //        self.shadowView.isHiddenBlurView = false
 
     }
@@ -1022,7 +1024,7 @@ extension ZLClipImageViewController{
          } else if pan.state == .cancelled || pan.state == .ended {
              panEdge = .none
              startTimer()
-             overlayView.setShowInnerGridLines(false)
+//             overlayView.setShowInnerGridLines(false)
 
          }
      }
