@@ -47,6 +47,12 @@ extension XSelectedModelsManager{
     static func customConfigure(maxSelect:Int = 9){
         let config = ZLPhotoConfiguration.default()
         let uiConfig = ZLPhotoUIConfiguration.default()
+        if(maxSelect == 9){
+            uiConfig.x_bottomTipsLabelTitle = "请选择2~9张图片"
+            uiConfig.x_bottomCustomBtnTitle = "开始拼图"
+            config.x_MinSelevtedPhoto = 2
+
+        }
         config.allowMixSelect = false
         config.allowEditVideo = false
         config.allowSelectVideo = false

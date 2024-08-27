@@ -133,7 +133,6 @@ public class XPhotoViewController:UIViewController{
     public convenience init(with maxSelect:Int = 9,hudStyle:ZLProgressHUD.Style = .custom,autoPop:Bool = true) {
         self.init()
         ZLPhotoUIConfiguration.default().hudStyle = hudStyle
-//        XSelectedModelsManager.shared.clearDatas()
         ZLPhotoConfiguration.default().autoPopToVC = autoPop
         XSelectedModelsManager.customConfigure(maxSelect: maxSelect)
     }
