@@ -182,7 +182,7 @@ public class ZLClipImageViewController: UIViewController {
     
     private lazy var bottomToolLineView: UIView = {
         let view = UIView()
-        view.backgroundColor = .zl.rgba(240, 240, 240,0.1)
+        view.backgroundColor = .zl.rgba(240, 240, 240,0)
         return view
     }()
     
@@ -228,7 +228,7 @@ public class ZLClipImageViewController: UIViewController {
         let layout = ZLCollectionViewFlowLayout()
         layout.itemSize = ZLClipImageViewController.clipRatioItemSize
         layout.scrollDirection = .horizontal
-        layout.sectionInset = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20)
+        layout.sectionInset = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 30)
         let view = UICollectionView(frame: .zero, collectionViewLayout: layout)
         view.delegate = self
         view.dataSource = self

@@ -47,7 +47,7 @@ class ZLClipSegmentView:UIView{
             button.setTitle(type.toName(), for: .normal)
             button.setTitleColor(.zl.rgba(102, 102, 102), for: .normal)
             button.setTitleColor(.white, for: .selected)
-            let font = UIFont(name: "PingFangSC-Medium", size: 14)
+            let font = UIFont(name: "PingFangSC-Medium", size: 15)
             button.titleLabel?.font = font
             button.tag = type.rawValue
             
@@ -80,7 +80,9 @@ class ZLClipSegmentView:UIView{
     private func setupIndicatorView() {
         guard let firstButton = buttons.first else { return }
 
-        indicatorView.backgroundColor = .blue // 设置指示器颜色
+        indicatorView.backgroundColor = .zl.rgba(55, 66, 250) // 设置指示器颜色
+        indicatorView.layer.masksToBounds = true
+        indicatorView.layer.cornerRadius = 2
         addSubview(indicatorView)
         
         // 设置 indicatorView 的 frame

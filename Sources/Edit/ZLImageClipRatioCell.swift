@@ -10,7 +10,7 @@ import UIKit
 
 class ZLImageClipRatioCell: UICollectionViewCell {
     private lazy var imageView: UIImageView = {
-        let view = UIImageView(frame: CGRect(x: 6, y: 10, width: 36, height: 36))
+        let view = UIImageView(frame: CGRect(x: 6, y: 10, width: 38, height: 38))
         view.contentMode = .scaleAspectFill
         view.layer.cornerRadius = 3
         view.layer.masksToBounds = true
