@@ -156,10 +156,12 @@ public class XPhotoViewController:UIViewController{
         
     }
     
-    private func loadContent(){
-
-        let hud = ZLProgressHUD.show(timeout: ZLPhotoUIConfiguration.default().timeout)
-        hud.show()
+    private func loadContent(show:Bool = true){
+        var hud:ZLProgressHUD?
+        if(show){
+          hud = ZLProgressHUD.show(timeout: ZLPhotoUIConfiguration.default().timeout)
+        }
+       
         loadAlbumList { [weak self] in
             guard let self = self else {return}
             if (self.albumLists.isEmpty) {return}
@@ -168,7 +170,9 @@ public class XPhotoViewController:UIViewController{
             for (index,item) in albumLists.enumerated(){
                 self.x_createCollectionView(index)
             }
-            hud.hide()
+            if let temp = hud {
+                temp.hide()
+            }
         }
     }
     
@@ -272,7 +276,7 @@ extension XPhotoViewController {
 extension XPhotoViewController: PHPhotoLibraryChangeObserver {
     public func photoLibraryDidChange(_ changeInstance: PHChange) {
         ZLMainAsync {
-            self.loadContent()
+            self.loadContent(show: false)
         }
     }
 }
