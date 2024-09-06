@@ -169,10 +169,6 @@ public class XPhotoViewController:UIViewController{
             if (self.albumLists.isEmpty) {return}
             
             self.scrollView.contentSize = CGSize(width: self.view.zl.width * CGFloat(self.albumLists.count), height: 0)
-            
-//            for (index,item) in albumLists.enumerated(){
-//                self.x_createCollectionView(index)
-//            }
             for (index, _) in self.albumLists.enumerated() {
                 // 优化：检查是否已经创建了 CollectionView
                 if let existingView = self.collectionViewCache[index] {
@@ -397,7 +393,21 @@ extension XPhotoViewController{
         if album.models.isEmpty {
             album.refetchPhotos()
         }
+        let datas = collectionView.arrDataSources
         collectionView.arrDataSources = album.models
+        
+        collectionView.largeBlock = { [weak self] index in
+               guard let self = self else { return }
+               // 使用当前更新的 `datas`
+               let vc = ZLPhotoPreviewController(photos: datas, index: index, showBottomViewAndSelectBtn: false)
+               vc.previewShowButton = self.x_PreviewShowButton
+               vc.beautyEditBlock = { model in
+                   self.addPhotoModel(model)
+                   self.requestSelectPhoto()
+               }
+               self.show(vc, sender: nil)
+           }
+        
     }
 
     //更新视图高度
