@@ -9,6 +9,8 @@ import Foundation
 import Photos
 
 public class XPhotoViewController:UIViewController{
+    private var collectionViewCache: [Int: XThumbNailCollectionView] = [:]
+
     //数据源 所有相册
     private var albumLists: [ZLAlbumListModel] = []
     //scrollow 所有内容view
@@ -167,9 +169,22 @@ public class XPhotoViewController:UIViewController{
             if (self.albumLists.isEmpty) {return}
             
             self.scrollView.contentSize = CGSize(width: self.view.zl.width * CGFloat(self.albumLists.count), height: 0)
-            for (index,item) in albumLists.enumerated(){
-                self.x_createCollectionView(index)
+            
+//            for (index,item) in albumLists.enumerated(){
+//                self.x_createCollectionView(index)
+//            }
+            for (index, _) in self.albumLists.enumerated() {
+                // 优化：检查是否已经创建了 CollectionView
+                if let existingView = self.collectionViewCache[index] {
+                    // 已经创建，直接更新数据源
+                    self.updateCollectionView(existingView, index: index)
+                } else {
+                    // 未创建，创建新的 CollectionView 并缓存
+                    let newView = self.x_createCollectionView(index)
+                    self.collectionViewCache[index] = newView
+                }
             }
+            
             if let temp = hud {
                 temp.hide()
             }
@@ -331,7 +346,7 @@ extension XPhotoViewController{
     }
 
     //仅内部调用创建控制器
-    final func x_createCollectionView(_ index: Int)  {
+    final func x_createCollectionView(_ index: Int) -> XThumbNailCollectionView {
         let labum = self.albumLists[index]
         var datas: [ZLPhotoModel] = []
         if labum.models.isEmpty {
@@ -374,8 +389,17 @@ extension XPhotoViewController{
         //将控制器的view添加到scrollView上
         self.scrollView.addSubview(view)
         self.contentViews.append(view)
+        return view
     }
-    
+    // 更新 CollectionView 的方法
+    private func updateCollectionView(_ collectionView: XThumbNailCollectionView, index: Int) {
+        let album = self.albumLists[index]
+        if album.models.isEmpty {
+            album.refetchPhotos()
+        }
+        collectionView.arrDataSources = album.models
+    }
+
     //更新视图高度
     func updateContentViewsHeight() {
         let H = scrollView.frame.height
