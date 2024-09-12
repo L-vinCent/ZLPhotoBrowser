@@ -76,11 +76,23 @@ class XSegmentAlbumView:UIView{
     func scrollToCurrentIndex(index:Int){
         guard let albums = self.arrDataSource,albums.indices.contains(index) else {return}
         selectedAlbum = albums[index]
+        scrollToCenter(at: index)
         DispatchQueue.main.async {
               self.collectionView.reloadData()
           }
-        
     }
+    
+    func scrollToCenter(at index: Int) {
+        guard index >= 0 && index < collectionView.numberOfItems(inSection: 0) else {
+            return // 确保 index 在有效范围内
+        }
+        
+        let indexPath = IndexPath(item: index, section: 0)
+        
+        // 滚动到指定的item位置，并指定滚动位置为居中
+        collectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
+    }
+    
     
 }
     //改为外部提供

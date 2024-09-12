@@ -929,13 +929,13 @@ extension ZLClipImageViewController{
              // 将edit rect转换为相对edit image的rect
              let rect = convertClipRectToEditImageRect()
              // 旋转图片
-             let startTime = CFAbsoluteTimeGetCurrent()
+//             let startTime = CFAbsoluteTimeGetCurrent()
 
              editImage = editImage.zl.rotate(orientation: orientation)
-             print("test===\(editImage.size)")
+//             print("test===\(editImage.size)")
 
-             let endTime2 = CFAbsoluteTimeGetCurrent()
-             print("花费时间===\(endTime2 - startTime)")
+//             let endTime2 = CFAbsoluteTimeGetCurrent()
+//             print("花费时间===\(endTime2 - startTime)")
 
              // 将rect进行旋转，转换到相对于旋转后的edit image的rect
              if(type == .cropLeft){

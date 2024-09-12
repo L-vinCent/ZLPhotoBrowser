@@ -68,15 +68,20 @@ public class ZLAlbumListModel: NSObject {
         self.isCameraRoll = isCameraRoll
     }
     
-    public func refetchPhotos() {
+    public func refetchPhotos(limitCount:Int = .max) {
+//        let startTime = CFAbsoluteTimeGetCurrent()
+
         let models = ZLPhotoManager.fetchPhoto(
             in: result,
             ascending: ZLPhotoUIConfiguration.default().sortAscending,
             allowSelectImage: ZLPhotoConfiguration.default().allowSelectImage,
-            allowSelectVideo: ZLPhotoConfiguration.default().allowSelectVideo
+            allowSelectVideo: ZLPhotoConfiguration.default().allowSelectVideo,
+            limitCount: limitCount
         )
         self.models.removeAll()
         self.models.append(contentsOf: models)
+//        let endTime = CFAbsoluteTimeGetCurrent()
+//        print("花费时间\(endTime - startTime)")
     }
     
     func refreshResult() {

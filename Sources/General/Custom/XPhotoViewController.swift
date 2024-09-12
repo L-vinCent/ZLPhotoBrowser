@@ -36,6 +36,9 @@ public class XPhotoViewController:UIViewController{
         queue.maxConcurrentOperationCount = 3
         return queue
     }()
+    
+//    private var isScrolling = false // 标志位，用于跟踪用户是否在滑动页面
+//    private var needsRefreshAfterScroll = false // 标志位，用于指示滑动停止后是否需要刷新
 
 
     
@@ -158,34 +161,90 @@ public class XPhotoViewController:UIViewController{
         
     }
     
+    
+    private let albumLoadingQueue = OperationQueue() // 创建一个 NSOperationQueue 用于管理相册数据加载
+
     private func loadContent(show:Bool = true){
         var hud:ZLProgressHUD?
         if(show){
           hud = ZLProgressHUD.show(timeout: ZLPhotoUIConfiguration.default().timeout)
         }
-       
+//        let startTime = CFAbsoluteTimeGetCurrent()
+
+      
+      
         loadAlbumList { [weak self] in
+//            let endTime = CFAbsoluteTimeGetCurrent()
+//            print("相册清单花费时间\(endTime - startTime)")
             guard let self = self else {return}
             if (self.albumLists.isEmpty) {return}
-            
             self.scrollView.contentSize = CGSize(width: self.view.zl.width * CGFloat(self.albumLists.count), height: 0)
-            for (index, _) in self.albumLists.enumerated() {
-                // 优化：检查是否已经创建了 CollectionView
-                if let existingView = self.collectionViewCache[index] {
-                    // 已经创建，直接更新数据源
-                    self.updateCollectionView(existingView, index: index)
-                } else {
-                    // 未创建，创建新的 CollectionView 并缓存
-                    let newView = self.x_createCollectionView(index)
-                    self.collectionViewCache[index] = newView
-                }
-            }
+            let firstPreviewAlbumModel = self.albumLists[0]
+            firstPreviewAlbumModel.refetchPhotos(limitCount: 500)
+            let newView = self.x_createCollectionView(index:0, datas: firstPreviewAlbumModel.models)
+            self.collectionViewCache[0] = newView
+
+            loadRemainingAlbums()
             
             if let temp = hud {
                 temp.hide()
             }
         }
     }
+    
+    // 异步加载剩余的所有相册数据
+    private func loadRemainingAlbums() {
+        albumLoadingQueue.maxConcurrentOperationCount = 6 // 设置最大并发操作数
+        // 处理第一个相册 (index 为 0)
+           if let firstAlbum = albumLists.first {
+               let loadFirstAlbumOperation = BlockOperation {
+                   firstAlbum.refetchPhotos(limitCount: .max) // 加载从第 501 张到最后的照片
+                   DispatchQueue.main.async { [weak self] in
+                       guard let self = self else { return }
+                       self.handleAlbumLoadCompletion(index: 0, models: firstAlbum.models)
+                       print("第 0 个相册加载完成，刷新页面")
+                   }
+               }
+               albumLoadingQueue.addOperation(loadFirstAlbumOperation)
+           }
+        
+        for (index, album) in albumLists.enumerated() where index > 0 {
+            let loadOperation = BlockOperation {
+                album.refetchPhotos(limitCount: .max) // 加载所有剩余照片
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    self.handleAlbumLoadCompletion(index: index, models: album.models)
+                    print("\(index) 加载完成，刷新页面")
+                }
+            }
+            albumLoadingQueue.addOperation(loadOperation)
+        }
+    }
+    // 处理相册数据加载完成
+    private func handleAlbumLoadCompletion(index: Int, models: [ZLPhotoModel]) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+//            // 判断当前是否在滑动状态
+//            if self.isScrolling {
+////                // 如果正在滑动，设置标志位，在滑动停止后刷新
+//                self.needsRefreshAfterScroll = true
+//            } else {
+                // 如果页面静止，立即刷新显示
+
+                if let existingView = self.collectionViewCache[index] {
+                    // 已经创建，直接更新数据源
+                    self.updateCollectionView(existingView, index: index)
+                } else {
+                    // 未创建，创建新的 CollectionView 并缓存
+                    let newView = self.x_createCollectionView(index:index,datas:models)
+                    self.collectionViewCache[index] = newView
+                }
+                
+            }
+//        }
+    }
+ 
     
     deinit {
         print("XTempVC deinit")
@@ -197,6 +256,7 @@ public class XPhotoViewController:UIViewController{
     }
     
 }
+
 
 //提供给外部的调用方法
 extension XPhotoViewController{
@@ -342,13 +402,13 @@ extension XPhotoViewController{
     }
 
     //仅内部调用创建控制器
-    final func x_createCollectionView(_ index: Int) -> XThumbNailCollectionView {
-        let labum = self.albumLists[index]
-        var datas: [ZLPhotoModel] = []
-        if labum.models.isEmpty {
-            labum.refetchPhotos()
-            datas.append(contentsOf: labum.models)
-        }
+    final func x_createCollectionView(index: Int,datas:[ZLPhotoModel]) -> XThumbNailCollectionView {
+//        let labum = self.albumLists[index]
+//        var datas: [ZLPhotoModel] = []
+//        if labum.models.isEmpty {
+//            labum.refetchPhotos()
+//            datas.append(contentsOf: labum.models)
+//        }
         
         let view = XThumbNailCollectionView(dataManager: dataManager)
         view.arrDataSources = datas
@@ -434,11 +494,27 @@ extension XPhotoViewController:UIScrollViewDelegate{
         scrollView.setContentOffset(offset, animated: animated)
     }
     
+    
+    
+//    // 监听滑动状态的方法
+//    public func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+//        isScrolling = true
+//    }
+//
+//    public func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+//        if !decelerate {
+//            isScrolling = false
+//        }
+//    }
+//    
     public func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+//        isScrolling = false
+
         let pageWidth = scrollView.bounds.width
         let currentPage = Int(scrollView.contentOffset.x / pageWidth)
         segmentView.scrollToCurrentIndex(index: currentPage)
         // 你可以在这里添加更多逻辑来处理滚动结束后的操作
+        
     }
 }
 //MARK: view 底部栏状态刷新
