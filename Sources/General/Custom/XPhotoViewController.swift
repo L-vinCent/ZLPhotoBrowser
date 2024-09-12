@@ -169,10 +169,6 @@ public class XPhotoViewController:UIViewController{
         if(show){
           hud = ZLProgressHUD.show(timeout: ZLPhotoUIConfiguration.default().timeout)
         }
-//        let startTime = CFAbsoluteTimeGetCurrent()
-
-      
-      
         loadAlbumList { [weak self] in
 //            let endTime = CFAbsoluteTimeGetCurrent()
 //            print("相册清单花费时间\(endTime - startTime)")
@@ -347,9 +343,62 @@ extension XPhotoViewController {
 extension XPhotoViewController: PHPhotoLibraryChangeObserver {
     public func photoLibraryDidChange(_ changeInstance: PHChange) {
         ZLMainAsync {
-            self.loadContent(show: false)
+            
+            // 检查每个已加载的相册是否有变化
+            for (index, album) in self.albumLists.enumerated() {
+                if let changes = changeInstance.changeDetails(for: album.result) {
+                    if changes.hasIncrementalChanges {
+                        self.albumLists[index].result = changes.fetchResultAfterChanges
+                        // 更新数据模型
+                        // 创建一个新的空数组来更新相册模型
+                        var updatedModels: [ZLPhotoModel] = album.models
+                                          
+                        // 处理删除的照片 (倒序)
+                        if let removedIndexes = changes.removedIndexes, removedIndexes.count > 0 {
+                            removedIndexes.forEach { index in
+                                let reversedIndex = updatedModels.count - 1 - index
+                                if reversedIndex >= 0 && reversedIndex < updatedModels.count {
+                                    updatedModels.remove(at: reversedIndex)
+                                }
+                            }
+                        }
+                        // 处理新增的照片 (倒序)
+                        if let insertedIndexes = changes.insertedIndexes, insertedIndexes.count > 0 {
+                            insertedIndexes.forEach { index in
+                                let reversedIndex = updatedModels.count - index
+                                if index < changes.fetchResultAfterChanges.count {
+                                    let newAsset = changes.fetchResultAfterChanges.object(at: index)
+                                    let newModel = ZLPhotoModel(asset: newAsset)
+                                    updatedModels.insert(newModel, at: reversedIndex)
+                                }
+                            }
+                        }
+                        // 处理修改的照片
+                        if let changedIndexes = changes.changedIndexes, changedIndexes.count > 0 {
+                            changedIndexes.forEach { index in
+                                if index < updatedModels.count {
+                                    let updatedAsset = changes.fetchResultAfterChanges.object(at: index)
+                                    updatedModels[index] = ZLPhotoModel(asset: updatedAsset)
+                                }
+                            }
+                        }
+                        self.albumLists[index].models = updatedModels
+                        self.handleAlbumLoadCompletion(index: index, models: updatedModels)
+                    }else{
+                        self.albumLists[index].result = changes.fetchResultAfterChanges
+                        self.albumLists[index].models = changes.fetchResultAfterChanges.objects(at: IndexSet(integersIn: 0..<changes.fetchResultAfterChanges.count)).reversed().map { ZLPhotoModel(asset: $0) }
+                        self.handleAlbumLoadCompletion(index: index, models: self.albumLists[index].models)
+
+                    }
+                    
+
+                }
+            }
         }
-    }
+            
+            
+        }
+    
 }
 
 
