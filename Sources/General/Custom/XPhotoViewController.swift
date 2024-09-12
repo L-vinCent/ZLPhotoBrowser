@@ -502,13 +502,13 @@ extension XPhotoViewController{
         if album.models.isEmpty {
             album.refetchPhotos()
         }
-        let datas = collectionView.arrDataSources
+//        let datas = collectionView.arrDataSources
         collectionView.arrDataSources = album.models
         
         collectionView.largeBlock = { [weak self] index in
                guard let self = self else { return }
                // 使用当前更新的 `datas`
-               let vc = ZLPhotoPreviewController(photos: datas, index: index, showBottomViewAndSelectBtn: false)
+               let vc = ZLPhotoPreviewController(photos: album.models, index: index, showBottomViewAndSelectBtn: false)
                vc.previewShowButton = self.x_PreviewShowButton
                vc.beautyEditBlock = { model in
                    self.addPhotoModel(model)
