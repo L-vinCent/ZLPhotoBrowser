@@ -10,6 +10,7 @@ import Photos
 
 public class XPhotoViewController:UIViewController{
     private var collectionViewCache: [Int: XThumbNailCollectionView] = [:]
+    public var umEnterFromString:String?
 
     //数据源 所有相册
     private var albumLists: [ZLAlbumListModel] = []
