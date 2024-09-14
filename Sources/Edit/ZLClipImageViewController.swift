@@ -106,6 +106,9 @@ public class ZLClipImageViewController: UIViewController {
     
     public var animateImageView: UIImageView?
 
+    //是否是后处理进来的  友盟统计用
+    public var isAfterDealPushEventExecuted = false
+
     /// 传回旋转角度，图片编辑区域的rect
     public var clipDoneBlock: ((CGFloat, CGRect, XCropProportionEnum) -> Void)?
     
@@ -115,7 +118,8 @@ public class ZLClipImageViewController: UIViewController {
     public var successClipBlock: ((UIImage) -> Void)?
 
     public var cancelClipBlock: (() -> Void)?
-    
+    public var UCancelBlock: ((ZLClipStatus,UIImage,UMRotateTuple) -> Void)?
+
     private var UClickRotate: UMRotateTuple = UMRotateTuple(false,false,false,false)
 
     public override var prefersStatusBarHidden: Bool { true }
@@ -334,6 +338,7 @@ public class ZLClipImageViewController: UIViewController {
         
         setupUI()
         generateThumbnailImage()
+        UPageShow()
     }
     
     public override func viewDidAppear(_ animated: Bool) {
@@ -804,6 +809,14 @@ extension ZLClipImageViewController{
      @objc private func cancelBtnClick() {
          dismissAnimateFromRect = cancelClipAnimateFrame
          dismissAnimateImage = presentAnimateImage
+         
+         //这里不需要再次做旋转操作
+         let image = clipImage()
+         let result = editImage.zl.clipImage(angle: 0, editRect: image.editRect, isCircle: false)
+         selectedRatio = selectedRatio.updateSize(to: image.editRect.size)
+         let clipStatus = ZLClipStatus(angle: self.angle, editRect: image.editRect,ratio: selectedRatio,flip: flipTuple)
+         UCancelBlock?(clipStatus,result,UClickRotate)
+         
          cancelClipBlock?()
          dismiss(animated: animate, completion: nil)
 
@@ -855,10 +868,13 @@ extension ZLClipImageViewController{
     
     
     private func rotateClick(type:XCropRotateEnum){
+        UClick(param: type.UMClickName)
         rotateBtnClick(type:type)
     }
     //翻转
     private func toggleFlip(for type: XCropRotateEnum) {
+        UClick(param: type.UMClickName)
+
         switch type {
         case .cropHor:
             flipTuple.horFlip.toggle()
@@ -1282,10 +1298,10 @@ extension ZLClipImageViewController: UICollectionViewDataSource, UICollectionVie
         
         if (collectionView == clipRatioColView){
             let ratio = clipRatios[indexPath.row]
-            print("asdasdasd\(ratio)")
             guard ratio != selectedRatio else {
                 return
             }
+            UClick(param: ratio.UMClickName)
             selectedRatio = ratio
             clipRatioColView.reloadData()
             clipRatioColView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
@@ -1398,3 +1414,13 @@ extension ZLClipImageViewController: UIViewControllerTransitioningDelegate {
 
 
 
+extension ZLClipImageViewController {
+   private func UPageShow(){
+        XPhotoAlbumComponent.notifyClipPageShow(paramString: isAfterDealPushEventExecuted ? "homepage" : "homepage_editor_page" )
+    }
+    
+   private func UClick(param:String){
+        XPhotoAlbumComponent.notifyClipClick(paramString: param )
+    }
+    
+}

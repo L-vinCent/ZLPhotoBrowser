@@ -11,7 +11,7 @@ import Photos
 public class XPhotoViewController:UIViewController{
     private var collectionViewCache: [Int: XThumbNailCollectionView] = [:]
     public var umEnterFromString:String?
-
+    
     //数据源 所有相册
     private var albumLists: [ZLAlbumListModel] = []
     //scrollow 所有内容view
@@ -159,7 +159,6 @@ public class XPhotoViewController:UIViewController{
         view.addSubview(customNav)
         resetCustomSelectPreviewStatus()
         NotificationCenter.default.addObserver(self, selector: #selector(resetCurrentVCDidChange), name: .PuzzleAgainDidChange, object: nil)
-        
     }
     
     
@@ -180,7 +179,7 @@ public class XPhotoViewController:UIViewController{
             firstPreviewAlbumModel.refetchPhotos(limitCount: 500)
             let newView = self.x_createCollectionView(index:0, datas: firstPreviewAlbumModel.models)
             self.collectionViewCache[0] = newView
-
+            
             loadRemainingAlbums()
             
             if let temp = hud {
@@ -194,12 +193,19 @@ public class XPhotoViewController:UIViewController{
         albumLoadingQueue.maxConcurrentOperationCount = 6 // 设置最大并发操作数
         // 处理第一个相册 (index 为 0)
            if let firstAlbum = albumLists.first {
+               
+               if firstAlbum.models.count <= 500{
+                   XPhotoAlbumComponent.notifyUTrackCameraCount(count: firstAlbum.models.count)
+                   return
+               }
                let loadFirstAlbumOperation = BlockOperation {
                    firstAlbum.refetchPhotos(limitCount: .max) // 加载从第 501 张到最后的照片
                    DispatchQueue.main.async { [weak self] in
                        guard let self = self else { return }
                        self.handleAlbumLoadCompletion(index: 0, models: firstAlbum.models)
-                       print("第 0 个相册加载完成，刷新页面")
+//                       print("第 0 个相册加载完成，刷新页面\(firstAlbum.models.count)")
+                       XPhotoAlbumComponent.notifyUTrackCameraCount(count: firstAlbum.models.count)
+
                    }
                }
                albumLoadingQueue.addOperation(loadFirstAlbumOperation)
@@ -211,7 +217,7 @@ public class XPhotoViewController:UIViewController{
                 DispatchQueue.main.async { [weak self] in
                     guard let self = self else { return }
                     self.handleAlbumLoadCompletion(index: index, models: album.models)
-                    print("\(index) 加载完成，刷新页面")
+//                    print("\(index) 加载完成，刷新页面")
                 }
             }
             albumLoadingQueue.addOperation(loadOperation)

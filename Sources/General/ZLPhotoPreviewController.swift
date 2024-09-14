@@ -241,6 +241,8 @@ class ZLPhotoPreviewController: UIViewController {
         
 //        addPopInteractiveTransition()
         resetSubviewStatus()
+        XPhotoAlbumComponent.notifyPageShowOnPhotoPreviewVC()
+
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -633,6 +635,8 @@ class ZLPhotoPreviewController: UIViewController {
     
     @objc private func backBtnClick() {
         backBlock?()
+        XPhotoAlbumComponent.notifyBuottonClickPreviewVC(isClose: true)
+
         let vc = navigationController?.popViewController(animated: true)
         if vc == nil {
             navigationController?.dismiss(animated: true, completion: nil)
@@ -641,6 +645,8 @@ class ZLPhotoPreviewController: UIViewController {
     
     @objc private func beautyBtnClick() {
         
+        XPhotoAlbumComponent.notifyBuottonClickPreviewVC(isClose: false)
+
         let currentModel = arrDataSources[currentIndex]
 //        downloadAssetIfNeed(model: currentModel, sender: self) { [weak self] in
 //            currentModel.isSelected = true
