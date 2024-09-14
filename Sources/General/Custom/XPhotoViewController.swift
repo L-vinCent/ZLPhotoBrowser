@@ -176,7 +176,7 @@ public class XPhotoViewController:UIViewController{
             if (self.albumLists.isEmpty) {return}
             self.scrollView.contentSize = CGSize(width: self.view.zl.width * CGFloat(self.albumLists.count), height: 0)
             let firstPreviewAlbumModel = self.albumLists[0]
-            firstPreviewAlbumModel.refetchPhotos(limitCount: 500)
+            firstPreviewAlbumModel.refetchPhotos(limitCount: 1000)
             let newView = self.x_createCollectionView(index:0, datas: firstPreviewAlbumModel.models)
             self.collectionViewCache[0] = newView
             
@@ -194,21 +194,23 @@ public class XPhotoViewController:UIViewController{
         // 处理第一个相册 (index 为 0)
            if let firstAlbum = albumLists.first {
                
-               if firstAlbum.models.count <= 500{
+               if firstAlbum.models.count <= 1000{
                    XPhotoAlbumComponent.notifyUTrackCameraCount(count: firstAlbum.models.count)
-                   return
-               }
-               let loadFirstAlbumOperation = BlockOperation {
-                   firstAlbum.refetchPhotos(limitCount: .max) // 加载从第 501 张到最后的照片
-                   DispatchQueue.main.async { [weak self] in
-                       guard let self = self else { return }
-                       self.handleAlbumLoadCompletion(index: 0, models: firstAlbum.models)
-//                       print("第 0 个相册加载完成，刷新页面\(firstAlbum.models.count)")
-                       XPhotoAlbumComponent.notifyUTrackCameraCount(count: firstAlbum.models.count)
+                   
+               }else{
+                   let loadFirstAlbumOperation = BlockOperation {
+                       firstAlbum.refetchPhotos(limitCount: .max) // 加载从第 501 张到最后的照片
+                       DispatchQueue.main.async { [weak self] in
+                           guard let self = self else { return }
+                           self.handleAlbumLoadCompletion(index: 0, models: firstAlbum.models)
+    //                       print("第 0 个相册加载完成，刷新页面\(firstAlbum.models.count)")
+                           XPhotoAlbumComponent.notifyUTrackCameraCount(count: firstAlbum.models.count)
 
+                       }
                    }
+                   albumLoadingQueue.addOperation(loadFirstAlbumOperation)
                }
-               albumLoadingQueue.addOperation(loadFirstAlbumOperation)
+              
            }
         
         for (index, album) in albumLists.enumerated() where index > 0 {
