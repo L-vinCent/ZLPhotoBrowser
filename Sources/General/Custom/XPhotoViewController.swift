@@ -11,7 +11,7 @@ import Photos
 public class XPhotoViewController:UIViewController{
     private var collectionViewCache: [Int: XThumbNailCollectionView] = [:]
     public var umEnterFromString:String?
-    
+    private let previewLoadPhotoNum:Int = 500
     //数据源 所有相册
     private var albumLists: [ZLAlbumListModel] = []
     //scrollow 所有内容view
@@ -166,22 +166,46 @@ public class XPhotoViewController:UIViewController{
 
     private func loadContent(show:Bool = true){
         var hud:ZLProgressHUD?
+        var uDic = Dictionary<String,String>()
+
         if(show){
-          hud = ZLProgressHUD.show(timeout: ZLPhotoUIConfiguration.default().timeout)
+            hud = ZLProgressHUD.show(timeout: ZLPhotoUIConfiguration.default().timeout,timeoutBlock: {
+                //加载超时
+                uDic["fail-timeOut"] = "加载超时"
+                XPhotoAlbumComponent.notifyCameraCheck(paramInfo: uDic)
+            })
         }
+        let startTime = CFAbsoluteTimeGetCurrent()
+        
+        
         loadAlbumList { [weak self] in
 //            let endTime = CFAbsoluteTimeGetCurrent()
 //            print("相册清单花费时间\(endTime - startTime)")
+            uDic["start"] = "开始加载首个相册页数据"
             guard let self = self else {return}
-            if (self.albumLists.isEmpty) {return}
+            if (self.albumLists.isEmpty) {
+                uDic["fail:empty-albumLists"] = "相册页为空"
+                XPhotoAlbumComponent.notifyCameraCheck(paramInfo: uDic)
+                if let temp = hud {temp.hide()}
+                return
+            }
             self.scrollView.contentSize = CGSize(width: self.view.zl.width * CGFloat(self.albumLists.count), height: 0)
             let firstPreviewAlbumModel = self.albumLists[0]
-            firstPreviewAlbumModel.refetchPhotos(limitCount: 1000)
+            firstPreviewAlbumModel.refetchPhotos(limitCount: previewLoadPhotoNum)
             let newView = self.x_createCollectionView(index:0, datas: firstPreviewAlbumModel.models)
             self.collectionViewCache[0] = newView
             
+            // 获取第一个相册的中文名字
+            let albumName = firstPreviewAlbumModel.title  // 相册名（假设title为中文）
+            let endTime = CFAbsoluteTimeGetCurrent()
+            let time = endTime - startTime
+
+            uDic["end"] = "当前\(albumName)相册首页成功,刷新当前页面,花费时间\(time)"
+            XPhotoAlbumComponent.notifyCameraCheck(paramInfo: uDic)
+
             loadRemainingAlbums()
             
+
             if let temp = hud {
                 temp.hide()
             }
@@ -192,26 +216,19 @@ public class XPhotoViewController:UIViewController{
     private func loadRemainingAlbums() {
         albumLoadingQueue.maxConcurrentOperationCount = 6 // 设置最大并发操作数
         // 处理第一个相册 (index 为 0)
-           if let firstAlbum = albumLists.first {
-               
-               if firstAlbum.models.count <= 1000{
-                   XPhotoAlbumComponent.notifyUTrackCameraCount(count: firstAlbum.models.count)
-                   
-               }else{
-                   let loadFirstAlbumOperation = BlockOperation {
-                       firstAlbum.refetchPhotos(limitCount: .max) // 加载从第 501 张到最后的照片
-                       DispatchQueue.main.async { [weak self] in
-                           guard let self = self else { return }
-                           self.handleAlbumLoadCompletion(index: 0, models: firstAlbum.models)
-    //                       print("第 0 个相册加载完成，刷新页面\(firstAlbum.models.count)")
-                           XPhotoAlbumComponent.notifyUTrackCameraCount(count: firstAlbum.models.count)
+        if let firstAlbum = albumLists.first {
+            let loadFirstAlbumOperation = BlockOperation {
+                firstAlbum.refetchPhotos(limitCount: .max)
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    self.handleAlbumLoadCompletion(index: 0, models: firstAlbum.models)
+                    //                       print("第 0 个相册加载完成，刷新页面\(firstAlbum.models.count)")
+                    XPhotoAlbumComponent.notifyUTrackCameraCount(count: firstAlbum.models.count)
 
-                       }
-                   }
-                   albumLoadingQueue.addOperation(loadFirstAlbumOperation)
-               }
-              
-           }
+                }
+            }
+            albumLoadingQueue.addOperation(loadFirstAlbumOperation)
+        }
         
         for (index, album) in albumLists.enumerated() where index > 0 {
             let loadOperation = BlockOperation {
@@ -219,7 +236,7 @@ public class XPhotoViewController:UIViewController{
                 DispatchQueue.main.async { [weak self] in
                     guard let self = self else { return }
                     self.handleAlbumLoadCompletion(index: index, models: album.models)
-//                    print("\(index) 加载完成，刷新页面")
+                    print("\(index) 加载完成，刷新页面")
                 }
             }
             albumLoadingQueue.addOperation(loadOperation)
@@ -251,9 +268,25 @@ public class XPhotoViewController:UIViewController{
     }
  
     
+   public override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        albumLoadingQueue.isSuspended = true
+
+    }
+
+    public override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        albumLoadingQueue.isSuspended = false
+    }
+    
     deinit {
-        print("XTempVC deinit")
+        print("XPhotoViewController deinit")
         PHPhotoLibrary.shared().unregisterChangeObserver(self)
+        NotificationCenter.default.removeObserver(self, name: .PuzzleAgainDidChange, object: nil)
+        self.albumLists.removeAll()
+        albumLoadingQueue.cancelAllOperations()
+        collectionViewCache.removeAll()
+        contentViews.removeAll()
 
 //        if(whenDeinitNeedClearSharedData){
 //            XSelectedModelsManager.shared.clearDatas()

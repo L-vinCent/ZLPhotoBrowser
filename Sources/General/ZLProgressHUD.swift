@@ -116,7 +116,8 @@ public class ZLProgressHUD: UIView {
         toast: ZLProgressHUD.Toast = .loading,
         shouldShowOverlay:Bool = true,
         in view: UIView? = UIApplication.shared.keyWindow,
-        timeout: TimeInterval = 100
+        timeout: TimeInterval = 100,
+        timeoutBlock:(()->Void)? = nil
     ) {
         ZLMainAsync {
             self.titleLabel.text = toast.value
@@ -141,6 +142,7 @@ public class ZLProgressHUD: UIView {
             cleanTimer()
             timer = Timer.scheduledTimer(timeInterval: timeout, target: ZLWeakProxy(target: self), selector: #selector(timeout(_:)), userInfo: nil, repeats: false)
             RunLoop.current.add(timer!, forMode: .default)
+            self.timeoutBlock?()
         }
     }
     
@@ -168,10 +170,11 @@ public extension ZLProgressHUD {
     class func show(
         toast: ZLProgressHUD.Toast = .loading,
         in view: UIView? = UIApplication.shared.keyWindow,
-        timeout: TimeInterval = 100
+        timeout: TimeInterval = 100,
+        timeoutBlock:(()->Void)? = nil
     ) -> ZLProgressHUD {
         let hud = ZLProgressHUD(style: ZLPhotoUIConfiguration.default().hudStyle)
-        hud.show(toast: toast,shouldShowOverlay: true, in: view, timeout: timeout)
+        hud.show(toast: toast,shouldShowOverlay: true, in: view, timeout: timeout,timeoutBlock: timeoutBlock)
         return hud
     }
     

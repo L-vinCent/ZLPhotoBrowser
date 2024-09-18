@@ -184,6 +184,9 @@ public class ZLPhotoManager: NSObject {
         if !allowSelectVideo {
             option.predicate = NSPredicate(format: "mediaType == %ld", PHAssetMediaType.image.rawValue)
         }
+       
+//        option.predicate = NSPredicate(format: "isInCloud == NO") // 仅获取已下载的照片
+        
         
         let smartAlbums = PHAssetCollection.fetchAssetCollections(with: .smartAlbum, subtype: .albumRegular, options: nil) as? PHFetchResult<PHCollection>
         let albums = PHAssetCollection.fetchAssetCollections(with: .album, subtype: .albumRegular, options: nil) as? PHFetchResult<PHCollection>
@@ -196,6 +199,11 @@ public class ZLPhotoManager: NSObject {
         arr.forEach { album in
             album.enumerateObjects { collection, _, _ in
                 guard let collection = collection as? PHAssetCollection else { return }
+                // 过滤掉“最近添加”的相册
+                if collection.assetCollectionSubtype == .smartAlbumRecentlyAdded {
+                    return
+                }
+                           
                 if collection.assetCollectionSubtype == .smartAlbumAllHidden {
                     return
                 }

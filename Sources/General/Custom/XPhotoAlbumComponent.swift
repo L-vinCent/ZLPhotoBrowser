@@ -21,6 +21,8 @@ public extension Notification.Name {
     public static let trackClipShowNotification = Notification.Name("trackClipShowNotification")
     //裁剪功能使用
     public static let trackClipClickNotification = Notification.Name("trackClipClickNotification")
+    //相册功能
+    public static let CameraCheckNotification = Notification.Name("CameraCheckNotification")
 }
 
 public class XPhotoAlbumComponent{
@@ -48,6 +50,9 @@ public class XPhotoAlbumComponent{
         // 发送通知，包含事件名称和参数
         NotificationCenter.default.post(name: .trackClipClickNotification, object: nil, userInfo:["key":paramString])
     }
-    
+    static func notifyCameraCheck(paramInfo:[String:String]) {
+        // 发送通知，包含事件名称和参数
+        NotificationCenter.default.post(name: .CameraCheckNotification, object: nil, userInfo:paramInfo)
+    }
     
 }

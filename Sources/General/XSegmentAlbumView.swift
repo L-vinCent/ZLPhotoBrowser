@@ -93,6 +93,10 @@ class XSegmentAlbumView:UIView{
         collectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
     }
     
+    deinit {
+        print("控制器=====View deinit \(String(describing: self))")
+    }
+
     
 }
     //改为外部提供
@@ -145,7 +149,6 @@ extension XSegmentAlbumView: UICollectionViewDelegateFlowLayout, UICollectionVie
         self.clickSegHandle?(model)
         self.collectionView.reloadData()
     }
-    
     
 }
 

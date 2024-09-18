@@ -75,5 +75,8 @@ class XCustomNavView:UIView{
         self.clickBackHandle?()
     }
 
+    deinit {
+        print("控制器=====View deinit \(String(describing: self))")
+    }
     
 }

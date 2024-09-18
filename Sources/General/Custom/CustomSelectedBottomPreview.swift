@@ -137,6 +137,9 @@ class CustomSelectedBottomPreview: UIView {
         self.bottomStartClick?()
     }
     
+    deinit {
+        print("控制器=====View deinit \(String(describing: self))")
+    }
 }
 
 
@@ -175,5 +178,5 @@ extension CustomSelectedBottomPreview:UICollectionViewDataSource,UICollectionVie
         return indexPath != nil
     }
     
-    
+ 
 }
