@@ -12,6 +12,7 @@ public class XPhotoViewController:UIViewController{
     private var collectionViewCache: [Int: XThumbNailCollectionView] = [:]
     public var umEnterFromString:String?
     private let previewLoadPhotoNum:Int = 500
+    private var currentSegmentIndex:Int = 0
     //数据源 所有相册
     private var albumLists: [ZLAlbumListModel] = []
     //scrollow 所有内容view
@@ -69,6 +70,7 @@ public class XPhotoViewController:UIViewController{
         view.clickSegHandle = {[weak self] selectedAlbum in
             guard let index = self?.albumLists.firstIndex(where: {$0 == selectedAlbum }) else {return}
             self?.scrollToIndex(index, animated: true)
+            self?.currentSegmentIndex = index
         }
         return view
     }()
@@ -212,48 +214,49 @@ public class XPhotoViewController:UIViewController{
         }
     }
     
-    // 异步加载剩余的所有相册数据
+    // 异步加载剩余所有相册数据,暂定 500张
     private func loadRemainingAlbums() {
         albumLoadingQueue.maxConcurrentOperationCount = 6 // 设置最大并发操作数
-        // 处理第一个相册 (index 为 0)
-        if let firstAlbum = albumLists.first {
-            let loadFirstAlbumOperation = BlockOperation {
-                firstAlbum.refetchPhotos(limitCount: .max)
-                DispatchQueue.main.async { [weak self] in
-                    guard let self = self else { return }
-                    self.handleAlbumLoadCompletion(index: 0, models: firstAlbum.models)
-                    //                       print("第 0 个相册加载完成，刷新页面\(firstAlbum.models.count)")
-                    XPhotoAlbumComponent.notifyUTrackCameraCount(count: firstAlbum.models.count)
-
-                }
-            }
-            albumLoadingQueue.addOperation(loadFirstAlbumOperation)
-        }
-        
         for (index, album) in albumLists.enumerated() where index > 0 {
             let loadOperation = BlockOperation {
-                album.refetchPhotos(limitCount: .max) // 加载所有剩余照片
+                album.refetchPhotos(limitCount: self.previewLoadPhotoNum)
                 DispatchQueue.main.async { [weak self] in
                     guard let self = self else { return }
                     self.handleAlbumLoadCompletion(index: index, models: album.models)
-                    print("\(index) 加载完成，刷新页面")
+//                    print("\(index) 加载完成，刷新页面")
                 }
             }
             albumLoadingQueue.addOperation(loadOperation)
         }
     }
+//    private var currentLoadingIndex = -1
+    private func loadTargetAllAlbums(at index: Int, nextNums: Int) {
+        guard index < albumLists.count else { return }
+//        self.currentLoadingIndex = -1
+        let currentAlbum = albumLists[index]
+        // Calculate limit count based on scroll position
+        print("\(currentSegmentIndex) 开始加载=====\(nextNums)，刷新页面")
+
+        let loadAlbumOperation = BlockOperation {
+            currentAlbum.refetchPhotos(limitCount: nextNums)
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                self.handleAlbumLoadCompletion(index: index, models: currentAlbum.models)
+                // Log the completion of album loading
+                XPhotoAlbumComponent.notifyUTrackCameraCount(count: currentAlbum.models.count)
+//                currentLoadingIndex = index
+                print("\(currentSegmentIndex) 加载完成=====\(nextNums)，刷新页面")
+
+            }
+        }
+        albumLoadingQueue.addOperation(loadAlbumOperation)
+    }
+    
+    
     // 处理相册数据加载完成
     private func handleAlbumLoadCompletion(index: Int, models: [ZLPhotoModel]) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            
-//            // 判断当前是否在滑动状态
-//            if self.isScrolling {
-////                // 如果正在滑动，设置标志位，在滑动停止后刷新
-//                self.needsRefreshAfterScroll = true
-//            } else {
-                // 如果页面静止，立即刷新显示
-
                 if let existingView = self.collectionViewCache[index] {
                     // 已经创建，直接更新数据源
                     self.updateCollectionView(existingView, index: index)
@@ -328,32 +331,7 @@ extension XPhotoViewController{
             break
         }
     }
-    
-//     //外部调用的跳转
-//    public func show(sender: UIViewController) {
-//        self.sender = sender
-//        let status = PHPhotoLibrary.authorizationStatus()
-//        if status == .restricted || status == .denied {
-//            showNoAuthorityAlert()
-//        } else if status == .notDetermined {
-//            PHPhotoLibrary.requestAuthorization { status in
-//                ZLMainAsync {
-//                    if status == .denied {
-//                        self.showNoAuthorityAlert()
-//                    } else if status == .authorized {
-//                        sender.navigationController?.pushViewController(self, animated: true)
-//                    }
-//                }
-//            }
-//            
-//        } else {
-//            sender.navigationController?.pushViewController(self, animated: true)
-//        }
-//        
-////        if #available(iOS 14.0, *), PHPhotoLibrary.authorizationStatus(for: .readWrite) == .limited {
-////            PHPhotoLibrary.shared().register(self)
-////        }
-//    }
+
 
     private func showNoAuthorityAlert() {
         let action = ZLCustomAlertAction(title: localLanguageTextValue(.gotoSettings), style: .default) { _ in
@@ -526,6 +504,13 @@ extension XPhotoViewController{
             self.show(vc, sender: nil)
 
         }
+        view.scrollowBlock = {[weak self] nums in
+            guard let self = self else {return}
+//            if(currentLoadingIndex < 0){
+                //默认值-1 没有在执行的，才刷新当前view
+                self.loadTargetAllAlbums(at: self.currentSegmentIndex, nextNums: nums)
+//            }
+        }
         //设置viewController的frame
         let X = scrollView.zl.width * CGFloat(index)
         let Y = 0
@@ -542,7 +527,7 @@ extension XPhotoViewController{
     private func updateCollectionView(_ collectionView: XThumbNailCollectionView, index: Int) {
         let album = self.albumLists[index]
         if album.models.isEmpty {
-            album.refetchPhotos()
+            album.refetchPhotos(limitCount: previewLoadPhotoNum)
         }
 //        let datas = collectionView.arrDataSources
         collectionView.arrDataSources = album.models

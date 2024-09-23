@@ -17,10 +17,12 @@ class XThumbNailCollectionView:UIView{
     var arrSelectedModels: [ZLPhotoModel] {
         return dataManager.arrSelectedModels
     }
+    var hasLoadedNextBatch = false // 标志位
 
     /// 预览跳转
     var largeBlock: ((Int) -> Void)?
-    
+    var scrollowBlock: ((Int) -> Void)?
+
     var selectImageBlock: ((ZLPhotoModel) -> Void)?
     var showAddPhotoCell:Bool = false
     var showCameraCell:Bool = false
@@ -87,6 +89,10 @@ class XThumbNailCollectionView:UIView{
     var arrDataSources: [ZLPhotoModel] = []{
         didSet{
             self.collectionView.reloadData()
+            if arrDataSources.count != oldValue.count {
+                hasLoadedNextBatch = false
+                print("=====新\(arrDataSources.count)旧\(oldValue.count)")
+            }
         }
     }
 }
@@ -426,6 +432,57 @@ extension XThumbNailCollectionView: UICollectionViewDataSource, UICollectionView
 
 
 
+extension XThumbNailCollectionView:UIScrollViewDelegate{
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        // 计算当前可视区域的起点
+             let visibleRect = CGRect(origin: scrollView.contentOffset, size: scrollView.bounds.size)
+             
+             // 获取当前可视的所有cell
+             let visibleCells = collectionView.visibleCells
+             
+//             // 获取当前可见的第一个cell的索引
+//             if let firstVisibleCellIndexPath = collectionView.indexPathsForVisibleItems.last {
+//                 let row = firstVisibleCellIndexPath.row
+//                 let section = firstVisibleCellIndexPath.section
+//                 print("当前可见第 \(section) 组，第 \(row) 行的 cell")
+//             }
+             
+             // 计算滑动的2/3位置
+             let scrollPosition = scrollView.contentOffset.y + scrollView.bounds.height
+             let twoThirdsPosition = scrollView.contentSize.height * 4 / 5
+             
+             // 如果滑动到2/3的位置，触发回调
+             if scrollPosition >= twoThirdsPosition && !hasLoadedNextBatch {
+                 
+                 let row = arrDataSources.count
+                 let nextLoadingCount = calculateLimitCount(for: row)
+                 self.scrollowBlock?(nextLoadingCount)
+                hasLoadedNextBatch = true // 标志位
+                 print("view执行次数=====")
 
+             }
+        
+    }
+    
+}
+extension XThumbNailCollectionView{
+    
+    private func calculateLimitCount(for currentNums: Int) -> Int {
+        switch currentNums {
+        case 0..<5000:
+            return 5000
+        case 5000..<10000:
+            return 10000
+        case 10000..<20000:
+            return 20000
+        case 20000..<50000:
+            return 50000
+        default:
+            return .max
+        }
+    }
+
+    
+}
 
 

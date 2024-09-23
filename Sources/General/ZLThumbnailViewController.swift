@@ -592,7 +592,7 @@ class ZLThumbnailViewController: UIViewController {
             var datas: [ZLPhotoModel] = []
             
             if self.albumList.models.isEmpty {
-                self.albumList.refetchPhotos()
+                self.albumList.refetchPhotos(limitCount: .max)
                 
                 datas.append(contentsOf: self.albumList.models)
                 markSelected(source: &datas, selected: &nav.arrSelectedModels)

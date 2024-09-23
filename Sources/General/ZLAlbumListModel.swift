@@ -68,7 +68,7 @@ public class ZLAlbumListModel: NSObject {
         self.isCameraRoll = isCameraRoll
     }
     
-    public func refetchPhotos(limitCount:Int = .max) {
+    public func refetchPhotos(limitCount:Int ) {
 //        let startTime = CFAbsoluteTimeGetCurrent()
 
         let models = ZLPhotoManager.fetchPhoto(
