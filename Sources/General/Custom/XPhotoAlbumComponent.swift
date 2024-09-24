@@ -12,9 +12,10 @@ import Foundation
 public extension Notification.Name {
     //统计相册数量
     public static let trackCameraCountsNotification = Notification.Name("trackCameraCountsNotification")
-
+    //照片列表页展示
+    public static let trackAlbumListPageShowNotification = Notification.Name("trackAlbumListPageShowNotification")
     //照片预览页展示
-   public static let trackPageShowNotification = Notification.Name("trackPageShowNotification")
+    public static let trackPreviewPageShowNotification = Notification.Name("trackPreviewPageShowNotification")
     //照片预览页
     public static let trackButtonClickNotification = Notification.Name("trackButtonClickNotification")
     //裁剪功能页展示
@@ -33,9 +34,17 @@ public class XPhotoAlbumComponent{
     }
     static func notifyPageShowOnPhotoPreviewVC() {
         // 发送通知，包含事件名称和参数
-        NotificationCenter.default.post(name: .trackPageShowNotification, object: nil, userInfo:nil)
+        NotificationCenter.default.post(name: .trackPreviewPageShowNotification, object: nil, userInfo:nil)
     }
     
+    static func notifyAlbumPageShowOnPhotoVC(paramString:String?) {
+        guard let paramString = paramString else {
+            NotificationCenter.default.post(name: .trackAlbumListPageShowNotification, object: nil, userInfo:["key":"import_photo"])
+            return
+        }
+        // 发送通知，包含事件名称和参数
+        NotificationCenter.default.post(name: .trackAlbumListPageShowNotification, object: nil, userInfo:["key":paramString])
+    }
     static func notifyBuottonClickPreviewVC(isClose:Bool) {
         // 发送通知，包含事件名称和参数
         NotificationCenter.default.post(name: .trackButtonClickNotification, object: nil, userInfo:["key": !isClose ? "edit_photos" : "close"])

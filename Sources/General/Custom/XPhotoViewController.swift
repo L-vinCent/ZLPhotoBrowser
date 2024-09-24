@@ -151,6 +151,7 @@ public class XPhotoViewController:UIViewController{
         loadContent()
         // 注册相册变化观察者
         PHPhotoLibrary.shared().register(self)
+        XPhotoAlbumComponent.notifyAlbumPageShowOnPhotoVC(paramString: umEnterFromString)
     }
     
     private func configUI(){
