@@ -194,9 +194,9 @@ public class XPhotoViewController:UIViewController{
             self.scrollView.contentSize = CGSize(width: self.view.zl.width * CGFloat(self.albumLists.count), height: 0)
             let firstPreviewAlbumModel = self.albumLists[0]
             firstPreviewAlbumModel.refetchPhotos(limitCount: previewLoadPhotoNum)
-            let newView = self.x_createCollectionView(index:0, datas: firstPreviewAlbumModel.models)
-            self.collectionViewCache[0] = newView
-            
+//            let newView = self.x_createCollectionView(index:0, datas: firstPreviewAlbumModel.models)
+//            self.collectionViewCache[0] = newView
+            handleAlbumLoadCompletion(index: 0, models: firstPreviewAlbumModel.models)
             // 获取第一个相册的中文名字
             let albumName = firstPreviewAlbumModel.title  // 相册名（假设title为中文）
             let endTime = CFAbsoluteTimeGetCurrent()
@@ -218,12 +218,13 @@ public class XPhotoViewController:UIViewController{
     private func loadRemainingAlbums() {
         albumLoadingQueue.maxConcurrentOperationCount = 6 // 设置最大并发操作数
         for (index, album) in albumLists.enumerated() where index > 0 {
-            let loadOperation = BlockOperation {
+            let loadOperation = BlockOperation {[weak self] in
+                guard let self = self else {return}
                 album.refetchPhotos(limitCount: self.previewLoadPhotoNum)
                 DispatchQueue.main.async { [weak self] in
                     guard let self = self else { return }
                     self.handleAlbumLoadCompletion(index: index, models: album.models)
-//                    print("\(index) 加载完成，刷新页面")
+                    print("\(index) 加载完成，刷新页面")
                 }
             }
             albumLoadingQueue.addOperation(loadOperation)
@@ -235,9 +236,10 @@ public class XPhotoViewController:UIViewController{
 //        self.currentLoadingIndex = -1
         let currentAlbum = albumLists[index]
         // Calculate limit count based on scroll position
-        print("\(currentSegmentIndex) 开始加载=====\(nextNums)，刷新页面")
+//        print("\(currentSegmentIndex) 开始加载test=====\(nextNums)，刷新页面")
 
-        let loadAlbumOperation = BlockOperation {
+        let loadAlbumOperation = BlockOperation {[weak self] in
+            guard let self = self else {return}
             currentAlbum.refetchPhotos(limitCount: nextNums)
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
@@ -245,7 +247,7 @@ public class XPhotoViewController:UIViewController{
                 // Log the completion of album loading
                 XPhotoAlbumComponent.notifyUTrackCameraCount(count: currentAlbum.models.count)
 //                currentLoadingIndex = index
-                print("\(currentSegmentIndex) 加载完成=====\(nextNums)，刷新页面")
+//                print("\(currentSegmentIndex) 加载完成test=====\(nextNums)，刷新页面")
 
             }
         }
@@ -286,10 +288,16 @@ public class XPhotoViewController:UIViewController{
         print("XPhotoViewController deinit")
         PHPhotoLibrary.shared().unregisterChangeObserver(self)
         NotificationCenter.default.removeObserver(self, name: .PuzzleAgainDidChange, object: nil)
-        self.albumLists.removeAll()
-        albumLoadingQueue.cancelAllOperations()
-        collectionViewCache.removeAll()
-        contentViews.removeAll()
+//        self.albumLists.removeAll()
+//        
+//        albumLoadingQueue.cancelAllOperations()
+//        collectionViewCache.removeAll()
+//        contentViews.removeAll()
+//        DoneImageBlock = nil
+//        selectImageErrorBlock = nil
+//        sender = nil
+//        dataManager = XSelectedModelsManager() // 或者如果不需要保留，可以设置为nil
+
 
 //        if(whenDeinitNeedClearSharedData){
 //            XSelectedModelsManager.shared.clearDatas()

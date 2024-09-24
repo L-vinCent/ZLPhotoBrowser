@@ -91,7 +91,7 @@ class XThumbNailCollectionView:UIView{
             self.collectionView.reloadData()
             if arrDataSources.count != oldValue.count {
                 hasLoadedNextBatch = false
-                print("=====新\(arrDataSources.count)旧\(oldValue.count)")
+//                print("test=====新\(arrDataSources.count)旧\(oldValue.count)")
             }
         }
     }
@@ -458,7 +458,7 @@ extension XThumbNailCollectionView:UIScrollViewDelegate{
                  let nextLoadingCount = calculateLimitCount(for: row)
                  self.scrollowBlock?(nextLoadingCount)
                 hasLoadedNextBatch = true // 标志位
-                 print("view执行次数=====")
+//                 print("view执行次数=====")
 
              }
         

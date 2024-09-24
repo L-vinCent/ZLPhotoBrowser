@@ -95,6 +95,9 @@ class XSegmentAlbumView:UIView{
     }
     
     deinit {
+        arrDataSource = nil
+        selectedAlbum = nil
+        clickSegHandle = nil
         print("控制器=====View deinit \(String(describing: self))")
     }
 
