@@ -194,6 +194,9 @@ public class XPhotoViewController:UIViewController{
             }
             self.scrollView.contentSize = CGSize(width: self.view.zl.width * CGFloat(self.albumLists.count), height: 0)
             let firstPreviewAlbumModel = self.albumLists[0]
+            let count = firstPreviewAlbumModel.result.count
+            print("相册测试\(count)")
+            XPhotoAlbumComponent.notifyUTrackCameraCount(count: count)
             firstPreviewAlbumModel.refetchPhotos(limitCount: previewLoadPhotoNum)
 //            let newView = self.x_createCollectionView(index:0, datas: firstPreviewAlbumModel.models)
 //            self.collectionViewCache[0] = newView
@@ -246,7 +249,7 @@ public class XPhotoViewController:UIViewController{
                 guard let self = self else { return }
                 self.handleAlbumLoadCompletion(index: index, models: currentAlbum.models)
                 // Log the completion of album loading
-                XPhotoAlbumComponent.notifyUTrackCameraCount(count: currentAlbum.models.count)
+//                XPhotoAlbumComponent.notifyUTrackCameraCount(count: currentAlbum.models.count)
 //                currentLoadingIndex = index
 //                print("\(currentSegmentIndex) 加载完成test=====\(nextNums)，刷新页面")
 
@@ -318,19 +321,20 @@ extension XPhotoViewController{
     }
     
     // 检查权限的方法
-    public func checkPhotoLibraryAuthorization(completion: @escaping () -> Void) {
+    public func checkPhotoLibraryAuthorization(isEdit:Bool = true,completion: @escaping () -> Void) {
+        let title:String = isEdit ? "你还没有开启照片权限，开启之后即可编辑照片" : "你还没有开启照片权限，开启之后即可保存照片"
+      
         let status = PHPhotoLibrary.authorizationStatus()
-
         switch status {
         case .restricted, .denied:
-            showNoAuthorityAlert()
+            showNoAuthorityAlert(subtitle: title)
         case .notDetermined:
             PHPhotoLibrary.requestAuthorization { newStatus in
                 ZLMainAsync {
                     if newStatus == .authorized {
                         completion()
                     } else {
-                        self.showNoAuthorityAlert()
+                        self.showNoAuthorityAlert(subtitle: title)
                     }
                 }
             }
@@ -342,8 +346,9 @@ extension XPhotoViewController{
     }
 
 
-    private func showNoAuthorityAlert() {
-        let action = ZLCustomAlertAction(title: localLanguageTextValue(.gotoSettings), style: .default) { _ in
+    public func showNoAuthorityAlert(title:String? = "开启照片权限",subtitle:String) {
+        
+        let action = ZLCustomAlertAction(title: "去设置", style: .default) { _ in
             ZLPhotoConfiguration.default().noAuthorityCallback?(.library)
             guard let url = URL(string: UIApplication.openSettingsURLString) else {
                 return
@@ -352,7 +357,10 @@ extension XPhotoViewController{
                 UIApplication.shared.open(url, options: [:], completionHandler: nil)
             }
         }
-        showAlertController(title: nil, message: String(format: localLanguageTextValue(.noPhotoLibratyAuthority), getAppName()), style: .alert, actions: [action], sender: sender)
+        let cancelAction = ZLCustomAlertAction(title: "取消", style: .default) { _ in
+        }
+        
+        showAlertController(title: title, message: subtitle, style: .alert, actions: [cancelAction,action], sender: sender)
     }
 
     
@@ -372,7 +380,6 @@ extension XPhotoViewController {
 extension XPhotoViewController: PHPhotoLibraryChangeObserver {
     public func photoLibraryDidChange(_ changeInstance: PHChange) {
         ZLMainAsync {
-            
             // 检查每个已加载的相册是否有变化
             for (index, album) in self.albumLists.enumerated() {
                 if let changes = changeInstance.changeDetails(for: album.result) {
@@ -382,12 +389,27 @@ extension XPhotoViewController: PHPhotoLibraryChangeObserver {
                         // 创建一个新的空数组来更新相册模型
                         var updatedModels: [ZLPhotoModel] = album.models
                                           
+                        //这里的album.count 会是删除后的，要拿到删除钱的总数
                         // 处理删除的照片 (倒序)
                         if let removedIndexes = changes.removedIndexes, removedIndexes.count > 0 {
-                            removedIndexes.forEach { index in
-                                let reversedIndex = updatedModels.count - 1 - index
-                                if reversedIndex >= 0 && reversedIndex < updatedModels.count {
-                                    updatedModels.remove(at: reversedIndex)
+//                            let reversedIndexes = removedIndexes.sorted(by: >)
+                            var indexSet = Set<Int>()
+                            for removeIndex in removedIndexes {
+                                let delAsset = changes.fetchResultBeforeChanges.object(at: removeIndex)
+                                let totalCount = changes.fetchResultBeforeChanges.count
+                                let delModel = ZLPhotoModel(asset: delAsset)
+                                if let delIndex = updatedModels.firstIndex(where: { $0 == delModel }) {
+//                                    updatedModels.remove(at: delIndex)
+//                                    print("adasdasdad\(delIndex)")
+                                    indexSet.insert(delIndex)
+                                }
+                            }
+                            
+                            let uniqueIndexes = Array(indexSet).sorted(by: >)
+
+                            for delIndex in uniqueIndexes {
+                                if delIndex < updatedModels.count {
+                                    updatedModels.remove(at: delIndex)
                                 }
                             }
                         }
@@ -398,19 +420,11 @@ extension XPhotoViewController: PHPhotoLibraryChangeObserver {
                                 if index < changes.fetchResultAfterChanges.count {
                                     let newAsset = changes.fetchResultAfterChanges.object(at: index)
                                     let newModel = ZLPhotoModel(asset: newAsset)
-                                    updatedModels.insert(newModel, at: reversedIndex)
+                                    updatedModels.insert(newModel, at: 0)
                                 }
                             }
                         }
-                        // 处理修改的照片
-                        if let changedIndexes = changes.changedIndexes, changedIndexes.count > 0 {
-                            changedIndexes.forEach { index in
-                                if index < updatedModels.count {
-                                    let updatedAsset = changes.fetchResultAfterChanges.object(at: index)
-                                    updatedModels[index] = ZLPhotoModel(asset: updatedAsset)
-                                }
-                            }
-                        }
+                        
                         self.albumLists[index].models = updatedModels
                         self.handleAlbumLoadCompletion(index: index, models: updatedModels)
                     }else{
