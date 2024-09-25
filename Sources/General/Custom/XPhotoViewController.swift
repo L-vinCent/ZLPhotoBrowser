@@ -424,6 +424,16 @@ extension XPhotoViewController: PHPhotoLibraryChangeObserver {
                                 }
                             }
                         }
+                        // 处理改变的照片 (倒序)
+                        if let changedIndexes = changes.changedIndexes, changedIndexes.count > 0 {
+                            changedIndexes.forEach { changeIndex in
+                                let changeAsset = changes.fetchResultAfterChanges.object(at:changeIndex )
+                                let changeModel = ZLPhotoModel(asset: changeAsset)
+                                if let changeIndex = updatedModels.firstIndex(where: { $0 == changeModel }) {
+                                    updatedModels[changeIndex] = changeModel
+                                }
+                            }
+                        }
                         
                         self.albumLists[index].models = updatedModels
                         self.handleAlbumLoadCompletion(index: index, models: updatedModels)
