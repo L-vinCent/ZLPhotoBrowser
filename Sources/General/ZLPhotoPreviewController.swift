@@ -333,12 +333,6 @@ class ZLPhotoPreviewController: UIViewController {
     func updateDataSource(with newDataSources: [ZLPhotoModel]) {
         self.arrDataSources = newDataSources
         self.collectionView.reloadData()
-        
-        // 如果需要，滚动到当前索引
-//        if currentIndex < arrDataSources.count {
-//            let indexPath = IndexPath(item: currentIndex, section: 0)
-//            collectionView.scrollToItem(at: indexPath, at: .centeredVertically, animated: false)
-//        }
     }
 
     

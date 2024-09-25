@@ -505,6 +505,12 @@ extension XPhotoViewController{
                 allowSelectVideo: ZLPhotoConfiguration.default().allowSelectVideo
             ) { [weak self] albumList in
                 guard let self = self else {return}
+                if(albumList.isEmpty){
+                    //空页面toast
+                    DispatchQueue.main.async {
+                        ZLProgressHUD.showMagicToast(message: "当前没有可使用的照片",timeout: 2.5)
+                    }
+                }
                 self.albumLists.removeAll()
                 self.albumLists.append(contentsOf: albumList)
                 ZLMainAsync {
