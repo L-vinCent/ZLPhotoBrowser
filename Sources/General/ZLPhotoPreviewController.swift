@@ -34,7 +34,7 @@ class ZLPhotoPreviewController: UIViewController {
     
     static let previewVCScrollNotification = Notification.Name("previewVCScrollNotification")
     
-    let arrDataSources: [ZLPhotoModel]
+    var arrDataSources: [ZLPhotoModel]
     
     var currentIndex: Int
     
@@ -329,6 +329,18 @@ class ZLPhotoPreviewController: UIViewController {
             cell.loadLivePhotoData()
         }
     }
+    // 更新数据源并刷新页面
+    func updateDataSource(with newDataSources: [ZLPhotoModel]) {
+        self.arrDataSources = newDataSources
+        self.collectionView.reloadData()
+        
+        // 如果需要，滚动到当前索引
+//        if currentIndex < arrDataSources.count {
+//            let indexPath = IndexPath(item: currentIndex, section: 0)
+//            collectionView.scrollToItem(at: indexPath, at: .centeredVertically, animated: false)
+//        }
+    }
+
     
     private func refreshBottomViewFrame() {
         var insets = UIEdgeInsets(top: 20, left: 0, bottom: 0, right: 0)

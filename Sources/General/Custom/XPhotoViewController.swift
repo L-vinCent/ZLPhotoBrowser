@@ -198,8 +198,6 @@ public class XPhotoViewController:UIViewController{
             print("相册测试\(count)")
             XPhotoAlbumComponent.notifyUTrackCameraCount(count: count)
             firstPreviewAlbumModel.refetchPhotos(limitCount: previewLoadPhotoNum)
-//            let newView = self.x_createCollectionView(index:0, datas: firstPreviewAlbumModel.models)
-//            self.collectionViewCache[0] = newView
             handleAlbumLoadCompletion(index: 0, models: firstPreviewAlbumModel.models)
             // 获取第一个相册的中文名字
             let albumName = firstPreviewAlbumModel.title  // 相册名（假设title为中文）
@@ -443,14 +441,28 @@ extension XPhotoViewController: PHPhotoLibraryChangeObserver {
                         self.handleAlbumLoadCompletion(index: index, models: self.albumLists[index].models)
 
                     }
-                    
-
                 }
             }
+            self.reloadPreviewVC()
         }
             
             
         }
+    
+    private func reloadPreviewVC(){
+        guard let navController = self.navigationController else { return }
+           
+           // 检查导航栈中的所有视图控制器
+           for controller in navController.viewControllers {
+               if let previewVC = controller as? ZLPhotoPreviewController {
+                   // 找到当前的 ZLPhotoPreviewController
+                   let photos = self.albumLists[currentSegmentIndex]
+                   // 可以在这里进行其他操作，例如更新数据或刷新界面
+                   previewVC.updateDataSource(with: photos.models)
+                   break
+               }
+           }
+    }
     
 }
 
