@@ -338,8 +338,6 @@ extension XPhotoViewController{
             }
         case .authorized:
             completion()
-        case .limited:
-            print("部分权限更新")
         default:
             break
         }
