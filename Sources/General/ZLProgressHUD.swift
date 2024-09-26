@@ -47,7 +47,7 @@ public class ZLProgressHUD: UIView {
     // 蒙层
      private lazy var overlayView: UIView = {
          let view = UIView(frame: UIScreen.main.bounds)
-         view.backgroundColor = UIColor.black.withAlphaComponent(0.1)
+         view.backgroundColor = UIColor.black.withAlphaComponent(0.5)
          view.isHidden = true
          return view
      }()
