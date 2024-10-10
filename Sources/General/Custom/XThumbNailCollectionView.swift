@@ -181,7 +181,9 @@ extension XThumbNailCollectionView: UICollectionViewDataSource, UICollectionView
         cell.chooseed = chooseed
         
         
-        cell.selectedBlock = { [weak self] block in
+        cell.selectedBlock = { [weak self,weak cell ] block in
+            guard let cell = cell else { return }
+
             if !model.isSelected || config.x_showCustomSelectedPreview{
                 let sender = self?.zl.findParentViewController()
                 let currentSelectCount = self?.arrSelectedModels.count ?? 0
