@@ -26,11 +26,15 @@
 
 import UIKit
 import Photos
+import CoreImage
+import ImageIO
+import MobileCoreServices
+
 
 @objcMembers
 public class ZLPhotoManager: NSObject {
     /// Save image to album.
-    public class func saveImageToAlbum(image: UIImage,name:String? = nil, completion: ((Bool, PHAsset?) -> Void)?) {
+    public class func saveImageToAlbum(image: UIImage,name:String? = nil,metadata:[String: Any]? = nil,fileType:XImageFormat = .jpeg,completion: ((Bool, PHAsset?) -> Void)?) {
         let status = PHPhotoLibrary.authorizationStatus()
         
         if status == .denied || status == .restricted {
@@ -51,34 +55,44 @@ public class ZLPhotoManager: NSObject {
             }
         }
 
-        if image.zl.hasAlphaChannel(), let data = image.pngData() {
-            PHPhotoLibrary.shared().performChanges({
-                let newAssetRequest = PHAssetCreationRequest.forAsset()
-                let options = PHAssetResourceCreationOptions()
-                options.originalFilename = name
-                newAssetRequest.addResource(with: .photo, data: data, options: options)
-                placeholderAsset = newAssetRequest.placeholderForCreatedAsset
-            }, completionHandler: completionHandler)
-        } else {
-            if let data = image.jpegData(compressionQuality: 1.0) {
-                PHPhotoLibrary.shared().performChanges({
-                    let newAssetRequest = PHAssetCreationRequest.forAsset()
-                    let options = PHAssetResourceCreationOptions()
-                    options.originalFilename = name
-                    newAssetRequest.addResource(with: .photo, data: data, options: options)
-                    placeholderAsset = newAssetRequest.placeholderForCreatedAsset
-                }, completionHandler: completionHandler)
-            }else{
-                PHPhotoLibrary.shared().performChanges({
-                    let newAssetRequest = PHAssetChangeRequest.creationRequestForAsset(from: image)
-                    placeholderAsset = newAssetRequest.placeholderForCreatedAsset
-                }, completionHandler: completionHandler)
+            switch fileType {
+            case .heic, .heif: // Combine cases directly without `case` keyword in between
+                // Handle HEIC and HEIF formats
+                   if let data = image.heic(metadata: metadata){
+                       PHPhotoLibrary.shared().performChanges({
+                           let newAssetRequest = PHAssetCreationRequest.forAsset()
+                           let options = PHAssetResourceCreationOptions()
+                           options.originalFilename = name
+                           newAssetRequest.addResource(with: .photo, data: data, options: options)
+                           placeholderAsset = newAssetRequest.placeholderForCreatedAsset
+                       }, completionHandler: completionHandler)
+                   }else{
+                       PHPhotoLibrary.shared().performChanges({
+                           let newAssetRequest = PHAssetChangeRequest.creationRequestForAsset(from: image)
+                           placeholderAsset = newAssetRequest.placeholderForCreatedAsset
+                       }, completionHandler: completionHandler)
+                   }
+            default:
+                // Create the data representation with metadata preserved.
+                guard let data = image.jpeg(metadata: metadata) else {
+                          PHPhotoLibrary.shared().performChanges({
+                              let newAssetRequest = PHAssetChangeRequest.creationRequestForAsset(from: image)
+                              placeholderAsset = newAssetRequest.placeholderForCreatedAsset
+                          }, completionHandler: completionHandler)
+                          return
+                      }
+                      
+                      PHPhotoLibrary.shared().performChanges({
+                          let newAssetRequest = PHAssetCreationRequest.forAsset()
+                          let options = PHAssetResourceCreationOptions()
+                          options.originalFilename = name
+                          newAssetRequest.addResource(with: .photo, data: data, options: options)
+                          placeholderAsset = newAssetRequest.placeholderForCreatedAsset
+                      }, completionHandler: completionHandler)
             }
-        }
-        
-        
-        
+
     }
+   
     /// Save data to album.
 
     public class func saveImageToAlbum(data: Data,name:String? = nil ,completion: ((Bool, PHAsset?) -> Void)?) {
@@ -499,7 +513,70 @@ public class ZLPhotoManager: NSObject {
             completion(path)
         }
     }
-    
+    public class func saveAssetAsImage(_ asset: PHAsset, toFile fileUrl: URL, progress: ((CGFloat, Error?, UnsafeMutablePointer<ObjCBool>, [AnyHashable: Any]?) -> Void)? = nil, completion: @escaping (UIImage?, Error?) -> Void) {
+        guard let resource = asset.zl.resource else {
+            completion(nil, NSError.assetSaveError)
+            return
+        }
+
+        var timer: Timer?
+        var canceled = false
+        let pointer = UnsafeMutablePointer<PHImageRequestID>.allocate(capacity: MemoryLayout<Int32>.stride)
+        pointer.pointee = PHInvalidImageRequestID
+        
+        func cleanTimer() {
+            timer?.invalidate()
+            timer = nil
+        }
+
+        func handleWriteCompletion(isDegraded: Bool, error: Error?, imageData: Data?) {
+            if let error = error {
+                cleanTimer()
+                completion(nil, error)
+            } else if !isDegraded {
+                cleanTimer()
+                // 转换为 UIImage 并调用 completion 回调
+                if let data = imageData, let image = UIImage(data: data) {
+                    completion(image, nil)
+                } else {
+                    completion(nil, NSError(domain: "ImageConversionError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert data to UIImage."]))
+                }
+            }
+        }
+
+        timer = .scheduledTimer(withTimeInterval: ZLPhotoUIConfiguration.default().timeout, repeats: false) { _ in
+            canceled = true
+            PHImageManager.default().cancelImageRequest(pointer.pointee)
+            completion(nil, NSError.timeoutError)
+        }
+
+        if asset.mediaType == .video {
+            pointer.pointee = fetchVideo(for: asset) { _, error, _, _ in
+                handleWriteCompletion(isDegraded: true, error: error, imageData: nil)
+            } completion: { _, info, isDegraded in
+                guard !canceled else { return }
+                let error = info?[PHImageErrorKey] as? Error
+                handleWriteCompletion(isDegraded: isDegraded, error: error, imageData: nil)
+            }
+        } else if asset.zl.isInCloud {
+            pointer.pointee = fetchOriginalImageData(for: asset) { _, error, _, _ in
+                handleWriteCompletion(isDegraded: true, error: error, imageData: nil)
+            } completion: { imageData, info, isDegraded in
+                guard !canceled else { return }
+                let error = info?[PHImageErrorKey] as? Error
+                handleWriteCompletion(isDegraded: isDegraded, error: error, imageData: imageData)
+            }
+        } else {
+            fetchOriginalImage(for: asset, progress: progress) { image, isDegraded in
+                guard !canceled else { return }
+                if let image = image, let imageData = image.pngData() {
+                    handleWriteCompletion(isDegraded: isDegraded, error: nil, imageData: imageData)
+                } else {
+                    handleWriteCompletion(isDegraded: isDegraded, error: nil, imageData: nil)
+                }
+            }
+        }
+    }
     /// Save asset original data to file url. Support save image and video.
     /// - Note: Asynchronously write to a local file. Calls completionHandler block on the main queue. If the asset object is in iCloud, it will be downloaded first and then written in the method. The timeout time is `ZLPhotoConfiguration.default().timeout`.
     public class func saveAsset(_ asset: PHAsset, toFile fileUrl: URL, completion: @escaping ((Error?) -> Void)) {
@@ -588,3 +665,177 @@ public extension ZLPhotoManager {
         return true
     }
 }
+
+
+//MARK: 处理HEIF
+extension ZLPhotoManager{
+   
+    public class func extractMetadata(from asset: PHAsset, completion: @escaping ([String: Any]?) -> Void) {
+        let options = PHContentEditingInputRequestOptions()
+        options.isNetworkAccessAllowed = true
+        
+        asset.requestContentEditingInput(with: options) { (input, _) in
+            guard let input = input,
+                  let url = input.fullSizeImageURL,
+                  let imageSource = CGImageSourceCreateWithURL(url as CFURL, nil) else {
+                completion(nil)
+                return
+            }
+            
+            // Extract metadata from the image
+            let metadata = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, nil) as? [String: Any]
+            completion(metadata)
+        }
+    }
+    
+    public class func getImageFormat(for asset: PHAsset) -> String? {
+        // Get the list of resources associated with the PHAsset
+        let resources = PHAssetResource.assetResources(for: asset)
+        
+        // Check the primary resource (original image)
+        if let resource = resources.first {
+            // Get the uniform type identifier (UTI) for the resource
+            let uti = resource.uniformTypeIdentifier
+            
+            // Convert the UTI to a readable format (like JPEG, HEIF, etc.)
+            if let fileType = UTTypeCopyDescription(UTTypeCreatePreferredIdentifierForTag(kUTTagClassMIMEType, uti as CFString, nil)?.takeRetainedValue() ?? uti as CFString)?.takeRetainedValue() {
+                return fileType as String
+            } else {
+                return uti // Return the UTI if conversion fails
+            }
+        }
+        
+        return nil // Return nil if no resource is found
+    }
+    
+    /// Create JPEG data with metadata.
+    private class func createJPEGDataWithMetadata(from image: UIImage, metadata: [String: Any]?) -> Data? {
+        guard let cgImage = image.zl.fixOrientation().cgImage else { return nil }
+        
+        // Create a mutable dictionary to hold the metadata including orientation.
+        var mutableMetadata = metadata ?? [String: Any]()
+        if let metadata = metadata,
+           let orientationValue = metadata[kCGImagePropertyOrientation as String] as? UInt32 {
+            // Map the orientation value to UIImage.Orientation
+            let imageOrientation = UIImage.Orientation(rawValue: Int(orientationValue))
+            print("图片方向\(imageOrientation)")
+        }
+//        let cgImageOrientation = cgImageOrientationFromUIImageOrientation(.up)
+//          mutableMetadata[kCGImagePropertyOrientation as String] = cgImageOrientation
+//
+        let mutableData = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(mutableData, kUTTypeJPEG, 1, nil) else { return nil }
+        
+        // Add the image to the destination with the metadata including orientation.
+        CGImageDestinationAddImage(destination, cgImage, mutableMetadata as CFDictionary)
+        guard CGImageDestinationFinalize(destination) else { return nil }
+        
+        return mutableData as Data
+    }
+    private class func cgImageOrientationFromUIImageOrientation(_ orientation: UIImage.Orientation) -> UInt32 {
+        switch orientation {
+        case .up: return 0
+        case .down: return 1
+        case .left: return 8
+        case .right: return 6
+        case .upMirrored: return 2
+        case .downMirrored: return 4
+        case .leftMirrored: return 5
+        case .rightMirrored: return 7
+        default: return 1
+        }
+    }
+}
+
+
+extension UIImage{
+    var cgImageOrientation: CGImagePropertyOrientation { .init(imageOrientation) }
+
+    var heic: Data? { heic() }
+    func heic(compressionQuality: CGFloat = 1,metadata: [String: Any]? = nil) -> Data? {
+        guard
+            let mutableData = CFDataCreateMutable(nil, 0),
+            let destination = CGImageDestinationCreateWithData(mutableData, "public.heic" as CFString, 1, nil),
+            let cgImage = cgImage
+        else { return nil }
+        // 创建一个可变的元数据字典，确保方向信息和其他元数据都被正确添加
+        var mutableMetadata = metadata ?? [String: Any]()
+        mutableMetadata[kCGImagePropertyOrientation as String] = cgImageOrientation.rawValue
+
+        
+        CGImageDestinationAddImage(destination, cgImage, mutableMetadata as CFDictionary)
+
+        guard CGImageDestinationFinalize(destination) else { return nil }
+        return mutableData as Data
+    }
+    
+    func jpeg(compressionQuality: CGFloat = 1, metadata: [String: Any]? = nil) -> Data? {
+           guard
+               let mutableData = CFDataCreateMutable(nil, 0),
+               let destination = CGImageDestinationCreateWithData(mutableData, kUTTypeJPEG, 1, nil),
+               let cgImage = cgImage
+           else { return nil }
+           
+           // 创建一个可变的元数据字典，确保方向信息和其他元数据都被正确添加
+           let mutableMetadata = createMutableMetadata(from: metadata, withOrientation: cgImageOrientation)
+//           mutableMetadata[kCGImagePropertyOrientation as String] = cgImageOrientation.rawValue
+         let properties: [CFString: Any] = [
+                    kCGImageDestinationLossyCompressionQuality: compressionQuality,
+                    kCGImagePropertyOrientation: cgImageOrientation.rawValue,
+                ]
+           CGImageDestinationAddImage(destination, cgImage, mutableMetadata as CFDictionary)
+           guard CGImageDestinationFinalize(destination) else { return nil }
+           return mutableData as Data
+       }
+    
+    func createMutableMetadata(from metadata: [String: Any]?, withOrientation orientation: CGImagePropertyOrientation) -> [String: Any] {
+        // 创建一个新的可变字典来存储复制后的元数据
+           var mutableMetadata = [String: Any]()
+
+           // 遍历传入的元数据并复制所有键值对
+           metadata?.forEach { key, value in
+               mutableMetadata[key] = value
+           }
+
+           // 设置或更新顶层的 kCGImagePropertyOrientation 的值为指定的方向
+           mutableMetadata[kCGImagePropertyOrientation as String] = orientation.rawValue
+
+           // 如果存在 EXIF 元数据字典，则更新 EXIF 中的方向信息
+           if var exifDict = mutableMetadata[kCGImagePropertyExifDictionary as String] as? [String: Any] {
+               exifDict[kCGImagePropertyOrientation as String] = orientation.rawValue
+               mutableMetadata[kCGImagePropertyExifDictionary as String] = exifDict
+           } else {
+               mutableMetadata[kCGImagePropertyExifDictionary as String] = [kCGImagePropertyOrientation as String: orientation.rawValue]
+           }
+
+           // 如果存在 TIFF 元数据字典，则更新 TIFF 中的方向信息
+           if var tiffDict = mutableMetadata[kCGImagePropertyTIFFDictionary as String] as? [String: Any] {
+               tiffDict[kCGImagePropertyOrientation as String] = orientation.rawValue
+               mutableMetadata[kCGImagePropertyTIFFDictionary as String] = tiffDict
+           } else {
+               mutableMetadata[kCGImagePropertyTIFFDictionary as String] = [kCGImagePropertyOrientation as String: orientation.rawValue]
+           }
+
+           return mutableMetadata
+    }
+    
+    
+}
+
+extension CGImagePropertyOrientation {
+    init(_ uiOrientation: UIImage.Orientation) {
+        switch uiOrientation {
+            case .up: self = .up
+            case .upMirrored: self = .upMirrored
+            case .down: self = .down
+            case .downMirrored: self = .downMirrored
+            case .left: self = .left
+            case .leftMirrored: self = .leftMirrored
+            case .right: self = .right
+            case .rightMirrored: self = .rightMirrored
+        @unknown default:
+            fatalError()
+        }
+    }
+}
+

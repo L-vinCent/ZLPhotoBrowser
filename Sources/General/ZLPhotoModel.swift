@@ -37,6 +37,34 @@ public extension ZLPhotoModel {
     }
 }
 
+
+public enum XImageFormat: String {
+    case jpeg = "public.jpeg"
+    case png = "public.png"
+    case heif = "public.heif"
+    case heic = "public.heic"
+    case tiff = "public.tiff"
+    case unknown
+    
+    static func fromUTI(_ uti: String) -> XImageFormat {
+        switch uti {
+        case XImageFormat.jpeg.rawValue:
+            return .jpeg
+        case XImageFormat.png.rawValue:
+            return .png
+        case XImageFormat.heif.rawValue:
+            return .heif
+        case XImageFormat.heic.rawValue:
+            return .heic
+        case XImageFormat.tiff.rawValue:
+            return .tiff
+        default:
+            return .unknown
+        }
+    }
+}
+
+
 public class ZLPhotoModel: NSObject {
     public let ident: String
     
